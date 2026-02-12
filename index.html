@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Khata Book Pro V36 Ultimate</title>
+    <title>Khata Book Pro V35 Max Plus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.autotable.min.js"></script>
@@ -11,7 +11,7 @@
     <style>
         :root { --app-height: 100vh; }
         body { 
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
             height: var(--app-height);
             overflow: hidden;
             transition: background 0.3s;
@@ -34,20 +34,17 @@
             margin: 0 auto;
             position: relative;
         }
-        .scroll-area { flex: 1; overflow-y: auto; padding-bottom: 160px; }
+        .scroll-area { flex: 1; overflow-y: auto; padding-bottom: 140px; }
         
         .khata-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .khata-table th { padding: 12px; text-align: center; font-size: 11px; font-weight: 900; background: rgba(128,128,128,0.05); }
-        .khata-table td { padding: 15px 10px; text-align: center; border-bottom: 1px solid rgba(128,128,128,0.1); font-size: 13px; font-weight: 600; }
+        .khata-table th { padding: 15px; text-align: center; font-size: 11px; font-weight: 900; background: rgba(128,128,128,0.05); }
+        .khata-table td { padding: 18px 10px; text-align: center; border-bottom: 1px solid rgba(128,128,128,0.1); font-size: 14px; font-weight: 600; }
         
-        /* Adjusted Footer Position */
         .sticky-footer {
-            position: absolute; 
-            bottom: 30px; /* Moved up from bottom */
-            left: 0; 
-            right: 0;
-            padding: 0 24px;
-            z-index: 100;
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 20px 24px calc(24px + env(safe-area-inset-bottom));
+            border-top: 1px solid rgba(128,128,128,0.1); z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .active-scale:active { transform: scale(0.95); transition: 0.1s; }
@@ -61,12 +58,13 @@
 <body class="dark-mode">
 
     <div class="app-container">
-        <header class="bg-indigo-700 p-5 flex justify-between items-center shrink-0">
+        <!-- Header -->
+        <header class="bg-indigo-700 p-5 flex justify-between items-center shrink-0 shadow-lg">
             <div class="flex items-center gap-4">
                 <button id="backBtn" class="hidden w-10 h-10 flex items-center justify-center rounded-full bg-white/10 active-scale" onclick="goHome()">
                     <i class="fa-solid fa-arrow-left text-white"></i>
                 </button>
-                <h1 id="headerTitle" class="text-lg font-black text-white uppercase">KHATA ULTIMATE</h1>
+                <h1 id="headerTitle" class="text-lg font-black text-white uppercase tracking-tighter">KHATA MAX+</h1>
             </div>
             <div class="flex gap-2">
                 <button onclick="toggleDarkMode()" class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center active-scale">
@@ -82,83 +80,92 @@
 
         <footer class="sticky-footer" id="mainFooter">
             <div id="homeFooter">
-                <button onclick="openCustomerModal()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black active-scale shadow-2xl flex items-center justify-center gap-2 border-b-4 border-indigo-800">
-                    <i class="fa-solid fa-plus-circle"></i> ADD CUSTOMER
+                <button onclick="openCustomerModal()" class="w-full bg-indigo-600 text-white py-5 rounded-3xl font-black active-scale shadow-xl flex items-center justify-center gap-2 text-lg">
+                    <i class="fa-solid fa-plus"></i> പുതിയ കസ്റ്റമർ
                 </button>
             </div>
-            <div id="detailActions" class="hidden flex gap-3">
-                <button onclick="openTransModal('GAVE')" class="flex-1 bg-rose-600 text-white py-4 rounded-2xl font-black active-scale shadow-lg">GAVE</button>
-                <button onclick="openTransModal('GOT')" class="flex-1 bg-emerald-600 text-white py-4 rounded-2xl font-black active-scale shadow-lg">GOT</button>
+            <div id="detailActions" class="hidden flex gap-4">
+                <button onclick="openTransModal('GAVE')" class="flex-1 bg-rose-600 text-white py-5 rounded-3xl font-black active-scale shadow-lg">നൽകി (GIVE)</button>
+                <button onclick="openTransModal('GOT')" class="flex-1 bg-emerald-600 text-white py-5 rounded-3xl font-black active-scale shadow-lg">ലഭിച്ചു (GET)</button>
             </div>
         </footer>
     </div>
 
+    <!-- Modals -->
     <div id="modalOverlay" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-end justify-center">
         
-        <div id="reportModal" class="hidden modal-bg w-full max-w-md p-6 rounded-t-[30px] modal-up">
-            <h2 class="text-xl font-black mb-4 text-indigo-500 text-center">REPORT PREVIEW</h2>
+        <!-- Report Modal -->
+        <div id="reportModal" class="hidden modal-bg w-full max-w-md p-6 rounded-t-[40px] modal-up">
+            <h2 class="text-xl font-black mb-4 text-indigo-500 text-center uppercase">റിപ്പോർട്ട്</h2>
             <div class="flex gap-2 mb-4">
-                <input type="date" id="reportStart" onchange="updatePreview()" class="flex-1 bg-black/10 p-3 rounded-xl border border-slate-700 text-xs font-bold">
-                <input type="date" id="reportEnd" onchange="updatePreview()" class="flex-1 bg-black/10 p-3 rounded-xl border border-slate-700 text-xs font-bold">
+                <input type="date" id="reportStart" class="flex-1 bg-black/10 p-3 rounded-xl border border-slate-700 text-sm font-bold">
+                <input type="date" id="reportEnd" class="flex-1 bg-black/10 p-3 rounded-xl border border-slate-700 text-sm font-bold">
             </div>
-            <div id="reportPreviewArea" class="max-h-[200px] overflow-y-auto mb-6 p-2 bg-black/5 rounded-xl border border-slate-700">
+            <div id="reportPreviewArea" class="max-h-[250px] overflow-y-auto mb-6 p-2 bg-black/5 rounded-xl border border-dashed border-slate-700">
                 <div id="reportPreviewContent"></div>
             </div>
             <div class="flex gap-3">
-                <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-500">Close</button>
-                <button onclick="generatePDF()" class="flex-[2] bg-indigo-600 text-white py-4 rounded-2xl font-black">SAVE PDF</button>
+                <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-500 bg-slate-500/10 rounded-2xl">Close</button>
+                <button onclick="downloadPDF()" class="flex-2 bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black">PRINT PDF</button>
             </div>
         </div>
 
-        <div id="qrModal" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[30px] text-center">
-            <h2 class="text-xl font-black mb-4 text-indigo-500">PAYMENT QR</h2>
-            <div class="bg-white p-4 rounded-2xl inline-block mb-4">
-                <img id="qrImg" src="" class="w-44 h-44">
+        <!-- QR Modal -->
+        <div id="qrModal" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[40px] text-center">
+            <h2 class="text-xl font-black mb-2 text-indigo-500">PAYMENT QR</h2>
+            <div id="qrContainer" class="bg-white p-4 rounded-3xl inline-block mb-6">
+                <img id="qrImg" src="" class="w-48 h-48">
             </div>
-            <p id="qrAmt" class="text-3xl font-black mb-6"></p>
-            <button onclick="shareWhatsApp()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 mb-3">
-                <i class="fa-brands fa-whatsapp text-xl"></i> WHATSAPP
+            <p id="qrAmt" class="text-3xl font-black mb-8"></p>
+            <button onclick="shareWhatsApp()" class="w-full bg-emerald-600 text-white py-5 rounded-3xl font-black active-scale flex items-center justify-center gap-2">
+                <i class="fa-brands fa-whatsapp text-xl"></i> WhatsApp അയക്കുക
             </button>
-            <button onclick="closeModal()" class="w-full py-2 text-slate-500">Close</button>
+            <button onclick="closeModal()" class="w-full py-4 text-slate-500 font-bold">Close</button>
         </div>
 
-        <div id="customerForm" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[30px]">
-            <h2 class="text-xl font-black mb-6 text-indigo-500">NEW CUSTOMER</h2>
-            <input type="text" id="custName" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 font-bold mb-4" placeholder="Name">
-            <input type="number" id="custPhone" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 font-bold mb-4" placeholder="Mobile">
-            <button onclick="saveCustomer()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">SAVE</button>
+        <!-- Forms (Simplified for code clarity) -->
+        <div id="customerForm" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[40px]">
+            <input type="hidden" id="editCustId">
+            <input type="text" id="custName" class="w-full bg-black/10 p-5 rounded-2xl border border-slate-700 font-bold mb-4" placeholder="പേര്">
+            <input type="number" id="custPhone" class="w-full bg-black/10 p-5 rounded-2xl border border-slate-700 font-bold mb-4" placeholder="മൊബൈൽ">
+            <button onclick="saveCustomer()" class="w-full bg-indigo-600 text-white py-5 rounded-3xl font-black">സേവ് ചെയ്യുക</button>
             <button onclick="closeModal()" class="w-full py-4 text-slate-500">Cancel</button>
         </div>
 
-        <div id="transForm" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[30px]">
-            <input type="hidden" id="transType">
-            <h2 id="transFormTitle" class="text-xl font-black text-indigo-500 mb-6 uppercase">ENTRY</h2>
-            <input type="date" id="transDate" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 mb-4 font-bold">
-            <input type="number" id="amount" class="w-full bg-indigo-600/5 p-6 rounded-2xl text-4xl font-black text-center mb-4" placeholder="0">
-            <input type="text" id="remark" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 mb-4 font-bold" placeholder="Remark">
-            <button onclick="saveTransaction()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">SAVE</button>
+        <div id="transForm" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[40px]">
+            <input type="hidden" id="editTransId"><input type="hidden" id="transType">
+            <input type="date" id="transDate" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 mb-4">
+            <input type="number" id="amount" class="w-full bg-indigo-600/5 p-8 rounded-3xl text-4xl font-black text-center mb-4" placeholder="0">
+            <input type="text" id="remark" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 mb-4" placeholder="വിവരണം">
+            <button onclick="saveTransaction()" class="w-full bg-indigo-600 text-white py-5 rounded-3xl font-black">സേവ് ചെയ്യുക</button>
             <button onclick="closeModal()" class="w-full py-4 text-slate-500">Back</button>
         </div>
 
-        <div id="settingsForm" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[30px]">
+        <!-- Settings -->
+        <div id="settingsForm" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[40px]">
             <h2 class="text-xl font-black mb-6 text-indigo-500">SETTINGS</h2>
-            <button onclick="exportBackup()" class="w-full bg-slate-500/10 p-4 rounded-xl font-bold mb-3 flex justify-between">Backup <i class="fa-solid fa-download"></i></button>
-            <button onclick="triggerImport()" class="w-full bg-slate-500/10 p-4 rounded-xl font-bold mb-3 flex justify-between">Restore <i class="fa-solid fa-upload"></i></button>
+            <button onclick="exportBackup()" class="w-full bg-slate-500/10 p-5 rounded-2xl font-bold mb-3 flex justify-between"><span>Backup</span> <i class="fa-solid fa-download"></i></button>
+            <button onclick="triggerImport()" class="w-full bg-slate-500/10 p-5 rounded-2xl font-bold mb-3 flex justify-between"><span>Restore</span> <i class="fa-solid fa-upload"></i></button>
             <input type="file" id="importFile" class="hidden" onchange="importBackup(event)">
-            <button onclick="closeModal()" class="w-full py-4 text-slate-500 font-bold">CLOSE</button>
+            <button onclick="closeModal()" class="w-full py-6 text-slate-500 font-bold">CLOSE</button>
         </div>
     </div>
 
     <script>
         const { jsPDF } = window.jspdf;
-        let db = JSON.parse(localStorage.getItem('khata_v36_final')) || { customers: [], trans: [], darkMode: true };
+        let db = JSON.parse(localStorage.getItem('khata_pro_v35_max_plus')) || { customers: [], trans: [], darkMode: true };
         let activeCid = null;
-        const upiID = "abdulsaleemkp563-3@okhdfcbank";
+        const upiID = "abdulsaleemkp563-3@okhdfcbank"; // UPI ID
 
-        const sync = () => localStorage.setItem('khata_v36_final', JSON.stringify(db));
+        const sync = () => localStorage.setItem('khata_pro_v35_max_plus', JSON.stringify(db));
         const getBal = (cid) => db.trans.filter(t => t.cid == cid).reduce((a, t) => t.type === 'GAVE' ? a + t.amt : a - t.amt, 0);
 
-        function toggleDarkMode() { db.darkMode = !db.darkMode; applyTheme(); sync(); }
+        function toggleDarkMode() {
+            db.darkMode = !db.darkMode;
+            applyTheme();
+            sync();
+        }
+
         function applyTheme() {
             document.body.className = db.darkMode ? 'dark-mode' : 'light-mode';
             document.getElementById('themeIcon').className = db.darkMode ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
@@ -166,39 +173,28 @@
 
         function renderHome() {
             let giveT = 0, getT = 0;
-            db.customers.forEach(c => {
-                const b = getBal(c.id);
-                if (b > 0) giveT += b; else getT += Math.abs(b);
-            });
-            const totalBal = Math.abs(giveT - getT);
-
             const list = db.customers.map(c => {
                 const b = getBal(c.id);
+                if (b > 0) giveT += b; else getT += Math.abs(b);
                 return `
                 <div class="p-5 border-b border-slate-500/10 flex justify-between items-center active-scale" onclick="showDetail(${c.id})">
                     <div class="flex items-center gap-4">
-                        <div class="w-11 h-11 bg-indigo-500/10 text-indigo-500 rounded-lg flex items-center justify-center font-black">${c.name[0]}</div>
-                        <div><p class="font-bold">${c.name}</p><p class="text-[10px] text-slate-500">${c.phone || ''}</p></div>
+                        <div class="w-12 h-12 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center font-black">${c.name[0]}</div>
+                        <div><p class="font-bold text-lg">${c.name}</p><p class="text-[10px] text-slate-500">${c.phone || ''}</p></div>
                     </div>
                     <div class="text-right">
                         <p class="font-black ${b >= 0 ? 'text-rose-500' : 'text-emerald-500'}">₹${Math.abs(b)}</p>
-                        <p class="text-[8px] uppercase font-bold">${b >= 0 ? 'Give' : 'Get'}</p>
+                        <p class="text-[8px] uppercase font-black">${b >= 0 ? 'Give' : 'Get'}</p>
                     </div>
                 </div>`;
             }).join('');
 
             document.getElementById('appContent').innerHTML = `
-                <div class="bg-indigo-700 p-5 shadow-lg">
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <div class="bg-white/10 p-4 rounded-xl text-white"><p class="text-[9px] font-bold opacity-70">GIVE</p><p class="text-xl font-black">₹${giveT}</p></div>
-                        <div class="bg-white/10 p-4 rounded-xl text-white"><p class="text-[9px] font-bold opacity-70">GET</p><p class="text-xl font-black">₹${getT}</p></div>
-                    </div>
-                    <div class="bg-indigo-800 p-4 rounded-2xl text-center border border-white/10">
-                        <p class="text-[9px] font-bold text-indigo-300">BALANCE</p>
-                        <p class="text-2xl font-black text-white">₹${totalBal}</p>
-                    </div>
+                <div class="bg-indigo-700 p-6 flex gap-4 text-white">
+                    <div class="flex-1 bg-white/10 p-4 rounded-2xl"><p class="text-[9px] uppercase font-bold">Give</p><p class="text-xl font-black">₹${giveT}</p></div>
+                    <div class="flex-1 bg-white/10 p-4 rounded-2xl"><p class="text-[9px] uppercase font-bold">Get</p><p class="text-xl font-black">₹${getT}</p></div>
                 </div>
-                <div class="mt-2">${list || '<p class="text-center py-20 text-slate-500 font-bold">No Data</p>'}</div>`;
+                <div>${list || '<p class="text-center py-20 text-slate-500">No Customers</p>'}</div>`;
         }
 
         function showDetail(cid) {
@@ -213,19 +209,18 @@
             document.getElementById('detailActions').classList.remove('hidden');
 
             const rows = items.map(t => `
-                <tr>
-                    <td class="text-[10px] text-slate-500">${t.date.split('-').reverse().join('/')}</td>
-                    <td class="text-emerald-500 font-bold">${t.type === 'GOT' ? '₹'+t.amt : '-'}</td>
-                    <td class="text-rose-500 font-bold">${t.type === 'GAVE' ? '₹'+t.amt : '-'}</td>
+                <tr onclick="openEditTrans(${t.id})">
+                    <td class="text-[10px] text-slate-500">${t.date}</td>
+                    <td class="text-emerald-500">${t.type === 'GOT' ? '₹'+t.amt : '-'}</td>
+                    <td class="text-rose-500">${t.type === 'GAVE' ? '₹'+t.amt : '-'}</td>
                 </tr>`).join('');
 
             document.getElementById('appContent').innerHTML = `
-                <div class="bg-indigo-700 p-6 flex justify-between items-center text-white">
-                    <div><p class="text-[10px] font-bold opacity-70">BALANCE</p><h2 class="text-4xl font-black">₹${Math.abs(b)}</h2></div>
+                <div class="bg-indigo-700 p-8 flex justify-between items-center text-white">
+                    <div><p class="text-[10px] uppercase font-bold opacity-70 tracking-widest">Balance</p><h2 class="text-4xl font-black">₹${Math.abs(b)}</h2></div>
                     <div class="flex gap-2">
                         <button onclick="openQR(${cid})" class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center active-scale"><i class="fa-solid fa-qrcode"></i></button>
-                        <button onclick="openReportModal(${cid})" class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center active-scale"><i class="fa-solid fa-print"></i></button>
-                        <button onclick="deleteCustomer(${cid})" class="w-12 h-12 bg-rose-500/20 rounded-xl flex items-center justify-center text-rose-300"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="openReportModal(${cid})" class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center active-scale"><i class="fa-solid fa-file-pdf"></i></button>
                     </div>
                 </div>
                 <div class="p-2">
@@ -233,40 +228,11 @@
                 </div>`;
         }
 
-        // --- IMPROVED PDF GENERATION FOR MOBILE ---
-        window.generatePDF = () => {
-            try {
-                const doc = new jsPDF();
-                const start = document.getElementById('reportStart').value;
-                const end = document.getElementById('reportEnd').value;
-                const c = db.customers.find(x => x.id == activeCid);
-                const items = db.trans.filter(t => t.cid == activeCid && t.date >= start && t.date <= end).sort((a,b) => new Date(a.date) - new Date(b.date));
-                
-                if(!items.length) return alert("No data found");
-
-                doc.text("KHATA STATEMENT", 14, 15);
-                doc.setFontSize(10);
-                doc.text(`Customer: ${c.name} | Date: ${start} to ${end}`, 14, 22);
-                
-                const tableData = items.map(t => [t.date, t.type==='GOT'?t.amt:'-', t.type==='GAVE'?t.amt:'-', t.desc||'-']);
-                doc.autoTable({ startY: 28, head: [['Date', 'Got', 'Gave', 'Remark']], body: tableData });
-                
-                // Use Blob for better browser compatibility
-                const pdfBlob = doc.output('blob');
-                const pdfUrl = URL.createObjectURL(pdfBlob);
-                const link = document.createElement('a');
-                link.href = pdfUrl;
-                link.download = `Report_${c.name}.pdf`;
-                link.click();
-                
-            } catch (e) {
-                alert("Please try again in a standard browser like Chrome.");
-            }
-        };
-
+        // --- QR & WhatsApp ---
         window.openQR = (cid) => {
             activeCid = cid;
-            const amt = Math.abs(getBal(cid));
+            const b = getBal(cid);
+            const amt = Math.abs(b);
             const upiUrl = `upi://pay?pa=${upiID}&pn=KhataBook&am=${amt}&cu=INR`;
             document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
             document.getElementById('qrAmt').innerText = `₹${amt}`;
@@ -276,34 +242,72 @@
         window.shareWhatsApp = () => {
             const c = db.customers.find(x => x.id == activeCid);
             const b = getBal(activeCid);
-            if(!c.phone) return alert("No phone number");
-            window.open(`https://wa.me/91${c.phone}?text=Balance: ₹${Math.abs(b)}`, '_blank');
+            const msg = `ഹലോ ${c.name}, നിങ്ങളുടെ ഖാത്ത ബാക്കി ₹${Math.abs(b)} ആണ്. വേഗത്തിൽ അടക്കുമല്ലോ. നന്ദി.`;
+            window.open(`https://wa.me/91${c.phone}?text=${encodeURIComponent(msg)}`, '_blank');
         };
 
-        window.openReportModal = (cid) => { activeCid = cid; updatePreview(); showModal('reportModal'); };
-        window.updatePreview = () => {
-            const items = db.trans.filter(t => t.cid == activeCid);
+        // --- PDF Fix ---
+        window.openReportModal = (cid) => {
+            activeCid = cid;
+            document.getElementById('reportStart').value = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+            document.getElementById('reportEnd').value = new Date().toISOString().split('T')[0];
+            showModal('reportModal');
+            updatePreview();
+        };
+
+        function updatePreview() {
+            const start = document.getElementById('reportStart').value;
+            const end = document.getElementById('reportEnd').value;
+            const items = db.trans.filter(t => t.cid == activeCid && t.date >= start && t.date <= end);
             let html = `<table><tr><th>Date</th><th>Got</th><th>Gave</th></tr>`;
-            items.forEach(t => html += `<tr><td>${t.date}</td><td>${t.type==='GOT'?t.amt:'-'}</td><td>${t.type==='GAVE'?t.amt:'-'}</td></tr>`);
+            items.forEach(t => html += `<tr><td>${t.date}</td><td>${t.type === 'GOT' ? t.amt : '-'}</td><td>${t.type === 'GAVE' ? t.amt : '-'}</td></tr>`);
             document.getElementById('reportPreviewContent').innerHTML = html + `</table>`;
+        }
+
+        window.downloadPDF = () => {
+            const doc = new jsPDF();
+            const start = document.getElementById('reportStart').value;
+            const end = document.getElementById('reportEnd').value;
+            const c = db.customers.find(x => x.id == activeCid);
+            const items = db.trans.filter(t => t.cid == activeCid && t.date >= start && t.date <= end);
+            
+            doc.setFontSize(18); doc.text("KHATA STATEMENT", 14, 20);
+            doc.setFontSize(10); doc.text(`Customer: ${c.name} | Period: ${start} - ${end}`, 14, 30);
+            
+            const tableData = items.map(t => [t.date, t.type === 'GOT' ? t.amt : '-', t.type === 'GAVE' ? t.amt : '-', t.desc]);
+            doc.autoTable({ startY: 40, head: [['Date', 'Received', 'Paid', 'Remark']], body: tableData });
+            
+            // New Window Output (Fixes print issue in some views)
+            const string = doc.output('datauristring');
+            const iframe = `<iframe width='100%' height='100%' src='${string}'></iframe>`;
+            const x = window.open();
+            x.document.open();
+            x.document.write(iframe);
+            x.document.close();
         };
 
+        // --- UI Logic ---
         function showModal(id) { document.getElementById('modalOverlay').classList.remove('hidden'); document.querySelectorAll('#modalOverlay > div').forEach(d => d.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
         window.closeModal = () => document.getElementById('modalOverlay').classList.add('hidden');
-        window.goHome = () => { activeCid = null; document.getElementById('headerTitle').innerText = 'KHATA ULTIMATE'; document.getElementById('backBtn').classList.add('hidden'); document.getElementById('homeFooter').classList.remove('hidden'); document.getElementById('detailActions').classList.add('hidden'); renderHome(); };
+        window.goHome = () => { activeCid = null; document.getElementById('headerTitle').innerText = 'KHATA MAX+'; document.getElementById('backBtn').classList.add('hidden'); document.getElementById('homeFooter').classList.remove('hidden'); document.getElementById('detailActions').classList.add('hidden'); renderHome(); };
         window.openSettings = () => showModal('settingsForm');
-        window.openCustomerModal = () => { document.getElementById('custName').value = ""; document.getElementById('custPhone').value = ""; showModal('customerForm'); };
+        window.openCustomerModal = () => { document.getElementById('editCustId').value = ""; document.getElementById('custName').value = ""; document.getElementById('custPhone').value = ""; showModal('customerForm'); };
         window.openTransModal = (type) => { document.getElementById('transType').value = type; document.getElementById('amount').value = ""; document.getElementById('remark').value = ""; document.getElementById('transDate').value = new Date().toISOString().split('T')[0]; showModal('transForm'); };
         
-        window.saveCustomer = () => { const n = document.getElementById('custName').value; if(!n) return; db.customers.push({id: Date.now(), name: n, phone: document.getElementById('custPhone').value}); sync(); closeModal(); renderHome(); };
+        window.saveCustomer = () => { 
+            const n = document.getElementById('custName').value; 
+            if(!n) return; 
+            db.customers.push({id: Date.now(), name: n, phone: document.getElementById('custPhone').value}); 
+            sync(); closeModal(); renderHome(); 
+        };
         window.saveTransaction = () => {
-            const a = Number(document.getElementById('amount').value); if(!a) return;
+            const a = Number(document.getElementById('amount').value);
+            if(!a) return;
             db.trans.push({id: Date.now(), cid: activeCid, amt: a, type: document.getElementById('transType').value, date: document.getElementById('transDate').value, desc: document.getElementById('remark').value});
             sync(); closeModal(); showDetail(activeCid);
         };
 
-        window.deleteCustomer = (id) => { if(confirm("Delete?")) { db.customers = db.customers.filter(c => c.id != id); db.trans = db.trans.filter(t => t.cid != id); sync(); goHome(); } };
-        window.exportBackup = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db)])); a.download = `Backup.json`; a.click(); };
+        window.exportBackup = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db)])); a.download = `Khata_Backup.json`; a.click(); };
         window.triggerImport = () => document.getElementById('importFile').click();
         window.importBackup = (e) => { const r = new FileReader(); r.onload = (ev) => { db = JSON.parse(ev.target.result); sync(); location.reload(); }; r.readAsText(e.target.files[0]); };
 
