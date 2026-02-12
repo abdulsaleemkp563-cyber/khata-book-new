@@ -1,1 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KHATA PRO - BLUE FIXED</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body.dark-mode { background: #0f172a; color: white; }
+        body.light-mode { background: #f8fafc; color: #0f172a; }
+
+        .app { max-width: 480px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; position: relative; }
+
+        .header { background: #1e40af; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; color: white; z-index: 100; }
+        .header h1 { font-size: 20px; font-weight: 900; }
+
+        .content { flex: 1; overflow-y: auto; padding-bottom: 150px; }
+
+        .summary { background: #1e40af; padding: 20px; border-radius: 0 0 30px 30px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+        .summary-card { background: rgba(255,255,255,0.15); padding: 15px; border-radius: 18px; text-align: center; }
+
+        .customer-card { margin: 10px 15px; padding: 15px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.05); }
+        .dark-mode .customer-card { background: #1e293b; border-color: rgba(255,255,255,0.05); }
+        .light-mode .customer-card { background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+
+        .footer { position: absolute; bottom: 80px; left: 20px; right: 20px; z-index: 100; display: flex; gap: 10px; }
+        .btn-main { flex: 1; padding: 18px; border-radius: 20px; font-weight: 800; border: none; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .btn-blue { background: #2563eb; width: 100%; border-bottom: 4px solid #1e3a8a; }
+        .btn-gave { background: #ef4444; border-bottom: 4px solid #991b1b; }
+        .btn-got { background: #22c55e; border-bottom: 4px solid #166534; }
+
+        /* 🖨️ A4 PRINT FIX - FORCED TO TOP */
+        #printArea { display: none; }
+        
+        @media print {
+            body { background: white !important; color: black !important; }
+            .app, .footer, .header, .modal-overlay, #modalOverlay { display: none !important; }
+            #printArea { 
+                display: block !important; 
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                padding: 20px;
+                color: black !important;
+            }
+            .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .report-table th, .report-table td { border: 1px solid #000 !important; padding: 8px; text-align: left; color: black !important; font-size: 14px; }
+            .report-header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+        }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: flex-end; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .modal { background: #1e293b; width: 100%; max-width: 480px; padding: 25px; border-radius: 30px 30px 0 0; }
+        .light-mode .modal { background: white; }
+        .modal-input { width: 100%; padding: 15px; margin-bottom: 12px; border-radius: 12px; background: rgba(0,0,0,0.05); border: 1px solid #ccc; color: inherit; }
+    </style>
+</head>
+<body class="dark-mode">
+
+    <div class="app">
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button id="backBtn" onclick="goHome()" style="display:none; background:none; color:white; border:none; font-size:20px;"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 id="navTitle">KHATA PRO</h1>
+            </div>
+            <div style="display: flex; gap: 18px;">
+                <button onclick="toggleTheme()" style="background:none; color:white; border:none; font-size:18px;"><i id="themeIcon" class="fa-solid fa-sun"></i></button>
+                <button onclick="openSettings()" style="background:none; color:white; border:none; font-size:18px;"><i class="fa-solid fa-gear"></i></button>
+            </div>
+        </div>
+
+        <div class="content" id="mainContent"></div>
+
+        <div class="footer">
+            <button id="homeBtn" class="btn-main btn-blue" onclick="openCustModal()"><i class="fa-solid fa-plus-circle"></i> NEW CUSTOMER</button>
+            <div id="detailBtns" style="display:none; width:100%; gap:10px;">
+                <button class="btn-main btn-gave" onclick="openTransModal('GAVE')">GAVE ₹</button>
+                <button class="btn-main btn-got" onclick="openTransModal('GOT')">GOT ₹</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="printArea">
+        <div class="report-header">
+            <h2 id="printCustName" style="font-size: 24px;">Customer Report</h2>
+            <p id="printPeriod" style="font-size: 14px;"></p>
+        </div>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Remark</th>
+                    <th>Gave (Out)</th>
+                    <th>Got (In)</th>
+                </tr>
+            </thead>
+            <tbody id="printBody"></tbody>
+        </table>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="custModal" style="display:none;">
+            <h2 id="custModalTitle" style="margin-bottom:20px;">Customer</h2>
+            <input type="hidden" id="editCustId">
+            <input type="text" id="custName" class="modal-input" placeholder="Name">
+            <input type="number" id="custPhone" class="modal-input" placeholder="Phone">
+            <button onclick="saveCustomer()" class="btn-main btn-blue">SAVE</button>
+            <button onclick="closeModals()" style="width:100%; margin-top:10px; color:gray;">Cancel</button>
+        </div>
+
+        <div class="modal" id="transModal" style="display:none;">
+            <h2 id="transTitle" style="margin-bottom:20px;">Entry</h2>
+            <input type="date" id="transDate" class="modal-input">
+            <input type="number" id="transAmt" class="modal-input" placeholder="Amount ₹">
+            <input type="text" id="transRemark" class="modal-input" placeholder="Remark">
+            <button onclick="saveTransaction()" class="btn-main btn-blue">SAVE ENTRY</button>
+            <button onclick="closeModals()" style="width:100%; margin-top:10px; color:gray;">Cancel</button>
+        </div>
+
+        <div class="modal" id="reportModal" style="display:none;">
+            <h2 style="margin-bottom:15px;">Print Statement</h2>
+            <input type="date" id="startDate" class="modal-input">
+            <input type="date" id="endDate" class="modal-input">
+            <button onclick="generatePrint()" class="btn-main btn-blue">PRINT A4</button>
+            <button onclick="closeModals()" style="width:100%; margin-top:10px; color:gray;">Cancel</button>
+        </div>
+
+        <div class="modal" id="qrModal" style="display:none; text-align:center;">
+            <h2>Payment QR</h2>
+            <img id="qrImg" src="" style="width:200px; margin:20px auto; background:white; padding:10px; border-radius:10px;">
+            <p id="qrAmtDisplay" style="font-size:24px; font-weight:900; margin-bottom:15px;"></p>
+            <button onclick="closeModals()" class="btn-main btn-blue">CLOSE</button>
+        </div>
+
+        <div class="modal" id="settingsModal" style="display:none;">
+            <h2 style="margin-bottom:20px;">Backup</h2>
+            <button onclick="exportBackup()" class="modal-input" style="text-align:left;"><i class="fa-solid fa-download"></i> Download Backup</button>
+            <button onclick="document.getElementById('importFile').click()" class="modal-input" style="text-align:left;"><i class="fa-solid fa-upload"></i> Restore Backup</button>
+            <input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
+            <button onclick="closeModals()" class="btn-main btn-blue">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('khata_pro_v6')) || { customers: [], trans: [], darkMode: true };
+        let activeCid = null;
+        let currentType = '';
+        const UPI_ID = "abdulsaleemkp563-3@okhdfcbank";
+
+        function saveDB() { localStorage.setItem('khata_pro_v6', JSON.stringify(db)); render(); }
+        function toggleTheme() { db.darkMode = !db.darkMode; applyTheme(); saveDB(); }
+        function applyTheme() {
+            document.body.className = db.darkMode ? 'dark-mode' : 'light-mode';
+            document.getElementById('themeIcon').className = db.darkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
+
+        function render() { activeCid ? renderDetails() : renderHome(); }
+
+        function renderHome() {
+            activeCid = null;
+            document.getElementById('navTitle').innerText = "KHATA PRO";
+            document.getElementById('backBtn').style.display = "none";
+            document.getElementById('homeBtn').style.display = "flex";
+            document.getElementById('detailBtns').style.display = "none";
+
+            let give = 0, got = 0;
+            db.trans.forEach(t => { if(t.type === 'GAVE') give += t.amt; else got += t.amt; });
+
+            let html = `<div class="summary"><div class="summary-grid">
+                <div class="summary-card"><div style="font-size:11px; font-weight:800;">YOU GIVE</div><div style="font-size:22px; font-weight:900; color:#fecaca;">₹${give}</div></div>
+                <div class="summary-card"><div style="font-size:11px; font-weight:800;">YOU GET</div><div style="font-size:22px; font-weight:900; color:#bbf7d0;">₹${got}</div></div>
+            </div></div><div style="padding:15px;">`;
+
+            db.customers.forEach(c => {
+                let bal = 0;
+                db.trans.filter(t => t.cid === c.id).forEach(t => bal += (t.type === 'GAVE' ? t.amt : -t.amt));
+                html += `<div class="customer-card">
+                    <div onclick="viewCust(${c.id})" style="flex:1;"><b>${c.name}</b><br><small style="opacity:0.6">${c.phone || ''}</small></div>
+                    <div style="text-align:right; margin-right:15px;"><b style="color:${bal >= 0 ? '#ef4444' : '#22c55e'}">₹${Math.abs(bal)}</b></div>
+                    <div style="display:flex; gap:10px;"><button onclick="editCust(${c.id})"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="delCust(${c.id})" style="color:#ef4444"><i class="fa-solid fa-trash"></i></button></div>
+                </div>`;
+            });
+            document.getElementById('mainContent').innerHTML = html + "</div>";
+        }
+
+        function viewCust(id) { activeCid = id; render(); }
+
+        function renderDetails() {
+            const customer = db.customers.find(c => c.id === activeCid);
+            document.getElementById('navTitle').innerText = customer.name;
+            document.getElementById('backBtn').style.display = "block";
+            document.getElementById('homeBtn').style.display = "none";
+            document.getElementById('detailBtns').style.display = "flex";
+
+            let bal = 0;
+            let trans = db.trans.filter(t => t.cid === activeCid);
+            trans.forEach(t => bal += (t.type === 'GAVE' ? t.amt : -t.amt));
+
+            let html = `<div class="summary" style="text-align:center;">
+                <div style="font-size:12px;">BALANCE</div><div style="font-size:40px; font-weight:900;">₹${Math.abs(bal)}</div>
+                <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+                    <button onclick="openQR(${Math.abs(bal)})" style="background:white; color:#1e40af; padding:8px 15px; border-radius:12px; font-weight:800;"><i class="fa-solid fa-qrcode"></i> QR</button>
+                    <button onclick="showModal('reportModal')" style="background:rgba(255,255,255,0.2); color:white; padding:8px 15px; border-radius:12px; font-weight:800;"><i class="fa-solid fa-print"></i> REPORT</button>
+                </div>
+            </div><div style="padding:15px;">`;
+
+            trans.slice().reverse().forEach(t => {
+                html += `<div class="customer-card">
+                    <div style="flex:1;"><small style="opacity:0.5">${t.date}</small><br><b>${t.remark || t.type}</b></div>
+                    <div style="font-weight:900; color:${t.type === 'GAVE' ? '#ef4444' : '#22c55e'}">₹${t.amt}</div>
+                    <button onclick="delTrans(${t.id})" style="margin-left:15px; opacity:0.3;"><i class="fa-solid fa-xmark"></i></button>
+                </div>`;
+            });
+            document.getElementById('mainContent').innerHTML = html + "</div>";
+        }
+
+        function saveCustomer() {
+            const name = document.getElementById('custName').value;
+            const phone = document.getElementById('custPhone').value;
+            const id = document.getElementById('editCustId').value;
+            if(!name) return;
+            if(id) {
+                let idx = db.customers.findIndex(x => x.id == id);
+                db.customers[idx].name = name; db.customers[idx].phone = phone;
+            } else {
+                db.customers.push({ id: Date.now(), name, phone });
+            }
+            saveDB(); closeModals();
+        }
+
+        function saveTransaction() {
+            const amt = parseFloat(document.getElementById('transAmt').value);
+            const date = document.getElementById('transDate').value;
+            const remark = document.getElementById('transRemark').value;
+            if(!amt || !date) return;
+            db.trans.push({ id: Date.now(), cid: activeCid, type: currentType, amt, date, remark });
+            saveDB(); closeModals();
+        }
+
+        function generatePrint() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const customer = db.customers.find(c => c.id === activeCid);
+            
+            let filtered = db.trans.filter(t => t.cid === activeCid);
+            if(start) filtered = filtered.filter(t => t.date >= start);
+            if(end) filtered = filtered.filter(t => t.date <= end);
+            
+            document.getElementById('printCustName').innerText = customer.name;
+            document.getElementById('printPeriod').innerText = "Period: " + (start || "All") + " to " + (end || "Today");
+            
+            let rows = "";
+            filtered.forEach(t => {
+                rows += `<tr>
+                    <td>${t.date.split('-').reverse().join('/')}</td>
+                    <td>${t.remark || '-'}</td>
+                    <td>${t.type === 'GAVE' ? '₹'+t.amt : ''}</td>
+                    <td>${t.type === 'GOT' ? '₹'+t.amt : ''}</td>
+                </tr>`;
+            });
+            document.getElementById('printBody').innerHTML = rows;
+            window.print();
+        }
+
+        function showModal(id) {
+            document.getElementById('modalOverlay').style.display = 'flex';
+            ['custModal', 'transModal', 'reportModal', 'qrModal', 'settingsModal'].forEach(m => document.getElementById(m).style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+        }
+        function closeModals() { document.getElementById('modalOverlay').style.display = 'none'; }
+        function goHome() { activeCid = null; render(); }
+        function openCustModal() { document.getElementById('editCustId').value = ""; document.getElementById('custName').value = ""; document.getElementById('custPhone').value = ""; showModal('custModal'); }
+        function editCust(id) { let c = db.customers.find(x => x.id === id); document.getElementById('editCustId').value = c.id; document.getElementById('custName').value = c.name; document.getElementById('custPhone').value = c.phone; showModal('custModal'); }
+        function delCust(id) { if(confirm("Delete Customer?")) { db.customers = db.customers.filter(c => c.id !== id); db.trans = db.trans.filter(t => t.cid !== id); saveDB(); } }
+        function delTrans(id) { if(confirm("Delete Entry?")) { db.trans = db.trans.filter(t => t.id !== id); saveDB(); } }
+        function openTransModal(type) { currentType = type; document.getElementById('transDate').valueAsDate = new Date(); document.getElementById('transAmt').value = ""; document.getElementById('transRemark').value = ""; showModal('transModal'); }
+        function openQR(amt) { document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${UPI_ID}%26am=${amt}%26cu=INR`; document.getElementById('qrAmtDisplay').innerText = "₹" + amt; showModal('qrModal'); }
+        function openSettings() { showModal('settingsModal'); }
+        function exportBackup() { let a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db)], {type:'application/json'})); a.download = 'khata_backup.json'; a.click(); }
+        function importBackup(e) { let r = new FileReader(); r.onload = (x) => { db = JSON.parse(x.target.result); applyTheme(); saveDB(); alert("Restored!"); }; r.readAsText(e.target.files[0]); }
+
+        window.onload = () => { applyTheme(); render(); };
+    </script>
+</body>
+              </html>
 
