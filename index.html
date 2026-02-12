@@ -34,17 +34,20 @@
             margin: 0 auto;
             position: relative;
         }
-        .scroll-area { flex: 1; overflow-y: auto; padding-bottom: 140px; }
+        .scroll-area { flex: 1; overflow-y: auto; padding-bottom: 160px; }
         
         .khata-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         .khata-table th { padding: 12px; text-align: center; font-size: 11px; font-weight: 900; background: rgba(128,128,128,0.05); }
         .khata-table td { padding: 15px 10px; text-align: center; border-bottom: 1px solid rgba(128,128,128,0.1); font-size: 13px; font-weight: 600; }
         
+        /* Adjusted Footer Position */
         .sticky-footer {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            padding: 20px 24px calc(24px + env(safe-area-inset-bottom));
+            position: absolute; 
+            bottom: 30px; /* Moved up from bottom */
+            left: 0; 
+            right: 0;
+            padding: 0 24px;
             z-index: 100;
-            backdrop-filter: blur(10px);
         }
 
         .active-scale:active { transform: scale(0.95); transition: 0.1s; }
@@ -79,7 +82,7 @@
 
         <footer class="sticky-footer" id="mainFooter">
             <div id="homeFooter">
-                <button onclick="openCustomerModal()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black active-scale shadow-xl flex items-center justify-center gap-2">
+                <button onclick="openCustomerModal()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black active-scale shadow-2xl flex items-center justify-center gap-2 border-b-4 border-indigo-800">
                     <i class="fa-solid fa-plus-circle"></i> ADD CUSTOMER
                 </button>
             </div>
@@ -103,7 +106,7 @@
             </div>
             <div class="flex gap-3">
                 <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-500">Close</button>
-                <button onclick="generatePDF()" class="flex-[2] bg-indigo-600 text-white py-4 rounded-2xl font-black">DOWNLOAD PDF</button>
+                <button onclick="generatePDF()" class="flex-[2] bg-indigo-600 text-white py-4 rounded-2xl font-black">SAVE PDF</button>
             </div>
         </div>
 
@@ -114,7 +117,7 @@
             </div>
             <p id="qrAmt" class="text-3xl font-black mb-6"></p>
             <button onclick="shareWhatsApp()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 mb-3">
-                <i class="fa-brands fa-whatsapp text-xl"></i> SHARE ON WHATSAPP
+                <i class="fa-brands fa-whatsapp text-xl"></i> WHATSAPP
             </button>
             <button onclick="closeModal()" class="w-full py-2 text-slate-500">Close</button>
         </div>
@@ -122,25 +125,25 @@
         <div id="customerForm" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[30px]">
             <h2 class="text-xl font-black mb-6 text-indigo-500">NEW CUSTOMER</h2>
             <input type="text" id="custName" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 font-bold mb-4" placeholder="Name">
-            <input type="number" id="custPhone" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 font-bold mb-4" placeholder="Mobile Number">
-            <button onclick="saveCustomer()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">SAVE CUSTOMER</button>
+            <input type="number" id="custPhone" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 font-bold mb-4" placeholder="Mobile">
+            <button onclick="saveCustomer()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">SAVE</button>
             <button onclick="closeModal()" class="w-full py-4 text-slate-500">Cancel</button>
         </div>
 
         <div id="transForm" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[30px]">
             <input type="hidden" id="transType">
-            <h2 id="transFormTitle" class="text-xl font-black text-indigo-500 mb-6 uppercase">NEW ENTRY</h2>
+            <h2 id="transFormTitle" class="text-xl font-black text-indigo-500 mb-6 uppercase">ENTRY</h2>
             <input type="date" id="transDate" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 mb-4 font-bold">
             <input type="number" id="amount" class="w-full bg-indigo-600/5 p-6 rounded-2xl text-4xl font-black text-center mb-4" placeholder="0">
-            <input type="text" id="remark" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 mb-4 font-bold" placeholder="Description / Remark">
-            <button onclick="saveTransaction()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">SAVE TRANSACTION</button>
+            <input type="text" id="remark" class="w-full bg-black/10 p-4 rounded-xl border border-slate-700 mb-4 font-bold" placeholder="Remark">
+            <button onclick="saveTransaction()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black">SAVE</button>
             <button onclick="closeModal()" class="w-full py-4 text-slate-500">Back</button>
         </div>
 
         <div id="settingsForm" class="hidden modal-bg w-full max-w-md p-8 rounded-t-[30px]">
             <h2 class="text-xl font-black mb-6 text-indigo-500">SETTINGS</h2>
-            <button onclick="exportBackup()" class="w-full bg-slate-500/10 p-4 rounded-xl font-bold mb-3 flex justify-between">Backup Data <i class="fa-solid fa-download"></i></button>
-            <button onclick="triggerImport()" class="w-full bg-slate-500/10 p-4 rounded-xl font-bold mb-3 flex justify-between">Restore Backup <i class="fa-solid fa-upload"></i></button>
+            <button onclick="exportBackup()" class="w-full bg-slate-500/10 p-4 rounded-xl font-bold mb-3 flex justify-between">Backup <i class="fa-solid fa-download"></i></button>
+            <button onclick="triggerImport()" class="w-full bg-slate-500/10 p-4 rounded-xl font-bold mb-3 flex justify-between">Restore <i class="fa-solid fa-upload"></i></button>
             <input type="file" id="importFile" class="hidden" onchange="importBackup(event)">
             <button onclick="closeModal()" class="w-full py-4 text-slate-500 font-bold">CLOSE</button>
         </div>
@@ -148,19 +151,14 @@
 
     <script>
         const { jsPDF } = window.jspdf;
-        let db = JSON.parse(localStorage.getItem('khata_ultimate_v36_final')) || { customers: [], trans: [], darkMode: true };
+        let db = JSON.parse(localStorage.getItem('khata_v36_final')) || { customers: [], trans: [], darkMode: true };
         let activeCid = null;
         const upiID = "abdulsaleemkp563-3@okhdfcbank";
 
-        const sync = () => localStorage.setItem('khata_ultimate_v36_final', JSON.stringify(db));
+        const sync = () => localStorage.setItem('khata_v36_final', JSON.stringify(db));
         const getBal = (cid) => db.trans.filter(t => t.cid == cid).reduce((a, t) => t.type === 'GAVE' ? a + t.amt : a - t.amt, 0);
 
-        function toggleDarkMode() {
-            db.darkMode = !db.darkMode;
-            applyTheme();
-            sync();
-        }
-
+        function toggleDarkMode() { db.darkMode = !db.darkMode; applyTheme(); sync(); }
         function applyTheme() {
             document.body.className = db.darkMode ? 'dark-mode' : 'light-mode';
             document.getElementById('themeIcon').className = db.darkMode ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
@@ -179,7 +177,7 @@
                 return `
                 <div class="p-5 border-b border-slate-500/10 flex justify-between items-center active-scale" onclick="showDetail(${c.id})">
                     <div class="flex items-center gap-4">
-                        <div class="w-11 h-11 bg-indigo-500/10 text-indigo-500 rounded-lg flex items-center justify-center font-black">${c.name[0].toUpperCase()}</div>
+                        <div class="w-11 h-11 bg-indigo-500/10 text-indigo-500 rounded-lg flex items-center justify-center font-black">${c.name[0]}</div>
                         <div><p class="font-bold">${c.name}</p><p class="text-[10px] text-slate-500">${c.phone || ''}</p></div>
                     </div>
                     <div class="text-right">
@@ -192,15 +190,15 @@
             document.getElementById('appContent').innerHTML = `
                 <div class="bg-indigo-700 p-5 shadow-lg">
                     <div class="grid grid-cols-2 gap-3 mb-3">
-                        <div class="bg-white/10 p-4 rounded-xl text-white"><p class="text-[9px] font-bold opacity-70">YOU GIVE</p><p class="text-xl font-black">₹${giveT}</p></div>
-                        <div class="bg-white/10 p-4 rounded-xl text-white"><p class="text-[9px] font-bold opacity-70">YOU GET</p><p class="text-xl font-black">₹${getT}</p></div>
+                        <div class="bg-white/10 p-4 rounded-xl text-white"><p class="text-[9px] font-bold opacity-70">GIVE</p><p class="text-xl font-black">₹${giveT}</p></div>
+                        <div class="bg-white/10 p-4 rounded-xl text-white"><p class="text-[9px] font-bold opacity-70">GET</p><p class="text-xl font-black">₹${getT}</p></div>
                     </div>
                     <div class="bg-indigo-800 p-4 rounded-2xl text-center border border-white/10">
-                        <p class="text-[9px] font-bold text-indigo-300">TOTAL BALANCE</p>
+                        <p class="text-[9px] font-bold text-indigo-300">BALANCE</p>
                         <p class="text-2xl font-black text-white">₹${totalBal}</p>
                     </div>
                 </div>
-                <div class="mt-2">${list || '<p class="text-center py-20 text-slate-500 font-bold">No Customers Found</p>'}</div>`;
+                <div class="mt-2">${list || '<p class="text-center py-20 text-slate-500 font-bold">No Data</p>'}</div>`;
         }
 
         function showDetail(cid) {
@@ -223,7 +221,7 @@
 
             document.getElementById('appContent').innerHTML = `
                 <div class="bg-indigo-700 p-6 flex justify-between items-center text-white">
-                    <div><p class="text-[10px] font-bold opacity-70">NET BALANCE</p><h2 class="text-4xl font-black">₹${Math.abs(b)}</h2></div>
+                    <div><p class="text-[10px] font-bold opacity-70">BALANCE</p><h2 class="text-4xl font-black">₹${Math.abs(b)}</h2></div>
                     <div class="flex gap-2">
                         <button onclick="openQR(${cid})" class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center active-scale"><i class="fa-solid fa-qrcode"></i></button>
                         <button onclick="openReportModal(${cid})" class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center active-scale"><i class="fa-solid fa-print"></i></button>
@@ -235,47 +233,34 @@
                 </div>`;
         }
 
-        // --- PDF Generation Logic ---
+        // --- IMPROVED PDF GENERATION FOR MOBILE ---
         window.generatePDF = () => {
             try {
                 const doc = new jsPDF();
                 const start = document.getElementById('reportStart').value;
                 const end = document.getElementById('reportEnd').value;
                 const c = db.customers.find(x => x.id == activeCid);
+                const items = db.trans.filter(t => t.cid == activeCid && t.date >= start && t.date <= end).sort((a,b) => new Date(a.date) - new Date(b.date));
                 
-                const items = db.trans.filter(t => t.cid == activeCid && t.date >= start && t.date <= end)
-                                    .sort((a,b) => new Date(a.date) - new Date(b.date));
-                
-                if(!items.length) return alert("No transactions found for this period.");
+                if(!items.length) return alert("No data found");
 
-                doc.setFontSize(20);
-                doc.setTextColor(79, 70, 229);
-                doc.text("KHATA STATEMENT", 14, 20);
-                
+                doc.text("KHATA STATEMENT", 14, 15);
                 doc.setFontSize(10);
-                doc.setTextColor(100);
-                doc.text(`Customer: ${c.name}`, 14, 30);
-                doc.text(`Period: ${start} to ${end}`, 14, 35);
+                doc.text(`Customer: ${c.name} | Date: ${start} to ${end}`, 14, 22);
                 
-                const tableData = items.map(t => [
-                    t.date.split('-').reverse().join('/'), 
-                    t.type === 'GOT' ? t.amt.toString() : '-', 
-                    t.type === 'GAVE' ? t.amt.toString() : '-', 
-                    t.desc || '-'
-                ]);
-
-                doc.autoTable({
-                    startY: 45,
-                    head: [['Date', 'Got (Credit)', 'Gave (Debit)', 'Remark']],
-                    body: tableData,
-                    headStyles: { fillColor: [79, 70, 229] }
-                });
+                const tableData = items.map(t => [t.date, t.type==='GOT'?t.amt:'-', t.type==='GAVE'?t.amt:'-', t.desc||'-']);
+                doc.autoTable({ startY: 28, head: [['Date', 'Got', 'Gave', 'Remark']], body: tableData });
                 
-                doc.text(`Net Balance: Rs. ${Math.abs(getBal(activeCid))}`, 14, doc.lastAutoTable.finalY + 15);
-                doc.save(`Khata_${c.name}.pdf`);
+                // Use Blob for better browser compatibility
+                const pdfBlob = doc.output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                const link = document.createElement('a');
+                link.href = pdfUrl;
+                link.download = `Report_${c.name}.pdf`;
+                link.click();
                 
-            } catch (err) {
-                alert("Error generating PDF. Please open this page in a standard browser.");
+            } catch (e) {
+                alert("Please try again in a standard browser like Chrome.");
             }
         };
 
@@ -291,26 +276,16 @@
         window.shareWhatsApp = () => {
             const c = db.customers.find(x => x.id == activeCid);
             const b = getBal(activeCid);
-            if(!c.phone) return alert("Please add a phone number first.");
-            const msg = `Hi ${c.name}, your Khata balance is ₹${Math.abs(b)}. Please settle it soon. Thank you.`;
-            window.open(`https://wa.me/91${c.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            if(!c.phone) return alert("No phone number");
+            window.open(`https://wa.me/91${c.phone}?text=Balance: ₹${Math.abs(b)}`, '_blank');
         };
 
-        window.openReportModal = (cid) => {
-            activeCid = cid;
-            document.getElementById('reportStart').value = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-            document.getElementById('reportEnd').value = new Date().toISOString().split('T')[0];
-            updatePreview();
-            showModal('reportModal');
-        };
-
+        window.openReportModal = (cid) => { activeCid = cid; updatePreview(); showModal('reportModal'); };
         window.updatePreview = () => {
-            const start = document.getElementById('reportStart').value;
-            const end = document.getElementById('reportEnd').value;
-            const items = db.trans.filter(t => t.cid == activeCid && t.date >= start && t.date <= end);
+            const items = db.trans.filter(t => t.cid == activeCid);
             let html = `<table><tr><th>Date</th><th>Got</th><th>Gave</th></tr>`;
-            items.forEach(t => html += `<tr><td>${t.date.split('-').reverse().join('/')}</td><td>${t.type==='GOT'?'₹'+t.amt:'-'}</td><td>${t.type==='GAVE'?'₹'+t.amt:'-'}</td></tr>`);
-            document.getElementById('reportPreviewContent').innerHTML = items.length ? html + `</table>` : "<p class='text-center py-5 font-bold opacity-50'>No Data</p>";
+            items.forEach(t => html += `<tr><td>${t.date}</td><td>${t.type==='GOT'?t.amt:'-'}</td><td>${t.type==='GAVE'?t.amt:'-'}</td></tr>`);
+            document.getElementById('reportPreviewContent').innerHTML = html + `</table>`;
         };
 
         function showModal(id) { document.getElementById('modalOverlay').classList.remove('hidden'); document.querySelectorAll('#modalOverlay > div').forEach(d => d.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
@@ -322,16 +297,15 @@
         
         window.saveCustomer = () => { const n = document.getElementById('custName').value; if(!n) return; db.customers.push({id: Date.now(), name: n, phone: document.getElementById('custPhone').value}); sync(); closeModal(); renderHome(); };
         window.saveTransaction = () => {
-            const a = Number(document.getElementById('amount').value);
-            if(!a) return;
+            const a = Number(document.getElementById('amount').value); if(!a) return;
             db.trans.push({id: Date.now(), cid: activeCid, amt: a, type: document.getElementById('transType').value, date: document.getElementById('transDate').value, desc: document.getElementById('remark').value});
             sync(); closeModal(); showDetail(activeCid);
         };
 
-        window.deleteCustomer = (id) => { if(confirm("Are you sure you want to delete this account?")) { db.customers = db.customers.filter(c => c.id != id); db.trans = db.trans.filter(t => t.cid != id); sync(); goHome(); } };
-        window.exportBackup = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db)])); a.download = `Khata_Backup.json`; a.click(); };
+        window.deleteCustomer = (id) => { if(confirm("Delete?")) { db.customers = db.customers.filter(c => c.id != id); db.trans = db.trans.filter(t => t.cid != id); sync(); goHome(); } };
+        window.exportBackup = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db)])); a.download = `Backup.json`; a.click(); };
         window.triggerImport = () => document.getElementById('importFile').click();
-        window.importBackup = (e) => { const r = new FileReader(); r.onload = (ev) => { try { db = JSON.parse(ev.target.result); sync(); location.reload(); } catch(e) { alert("Invalid Backup File"); } }; r.readAsText(e.target.files[0]); };
+        window.importBackup = (e) => { const r = new FileReader(); r.onload = (ev) => { db = JSON.parse(ev.target.result); sync(); location.reload(); }; r.readAsText(e.target.files[0]); };
 
         window.onload = () => { applyTheme(); renderHome(); };
     </script>
