@@ -3,31 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KHATA PRO - V17 FINAL FIX</title>
+    <title>KHATA PRO - V18 MOBILE FIX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body.dark-mode { background: #0f172a; color: #f8fafc; }
-        body.light-mode { background: #f8fafc; color: #0f172a; }
+        body.dark-mode { background: #0f172a; color: #f8fafc; overflow-x: hidden; }
         .app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
         .dashboard-card { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 35px 20px; border-radius: 0 0 35px 35px; text-align: center; }
         .balance-amount { font-size: 42px; font-weight: 800; color: white; margin: 10px 0; }
         .list-container { padding: 20px; flex: 1; overflow-y: auto; padding-bottom: 120px; }
-        .cust-card { display: flex; align-items: center; padding: 16px; border-radius: 20px; margin-bottom: 12px; cursor: pointer; }
-        .dark-mode .cust-card { background: #1e293b; }
-        .light-mode .cust-card { background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .trans-card { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; padding: 15px; border-radius: 18px; margin-bottom: 10px; align-items: center; font-size: 13px; }
-        .dark-mode .trans-card { background: #1e293b; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: flex-end; z-index: 2000; backdrop-filter: blur(5px); }
-        .modal { width: 100%; max-width: 480px; padding: 25px; border-radius: 30px 30px 0 0; transform: translateY(100%); transition: transform 0.3s ease; }
+        .cust-card { display: flex; align-items: center; padding: 18px; border-radius: 20px; margin-bottom: 12px; background: #1e293b; border: 1px solid rgba(255,255,255,0.05); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: flex-end; z-index: 9999; backdrop-filter: blur(10px); }
+        .modal { width: 100%; max-width: 480px; padding: 30px 25px; border-radius: 30px 30px 0 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0, 0, 0.2, 1); background: #1e293b; }
         .modal.active { transform: translateY(0); }
-        .dark-mode .modal { background: #1e293b; }
-        .input-field { width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #334155; background: #0f172a; color: white; outline: none; font-size: 16px; margin-bottom: 15px; }
-        .fab { position: fixed; bottom: 30px; right: 20px; width: 60px; height: 60px; background: #2563eb; color: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; z-index: 100; border: none; }
-        .footer { position: fixed; bottom: 0; width: 100%; max-width: 480px; padding: 20px; display: flex; gap: 10px; z-index: 50; }
-        .btn-action { flex: 1; padding: 18px; border-radius: 20px; font-weight: 800; color: white; border: none; }
+        .input-field { width: 100%; padding: 18px; border-radius: 15px; border: 2px solid #334155; background: #0f172a; color: white; outline: none; font-size: 16px; margin-bottom: 15px; }
+        .fab { position: fixed; bottom: 30px; right: 20px; width: 65px; height: 65px; background: #2563eb; color: white; border-radius: 22px; display: flex; align-items: center; justify-content: center; font-size: 24px; z-index: 1000; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .btn-save { width: 100%; padding: 18px; background: #2563eb; color: white; border-radius: 18px; font-weight: 800; border: none; font-size: 16px; }
     </style>
 </head>
 <body class="dark-mode">
@@ -35,16 +28,12 @@
     <div class="app">
         <div class="p-5 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <button id="backBtn" onclick="goHome()" class="hidden p-2 text-xl"><i class="fa-solid fa-chevron-left"></i></button>
+                <button id="backBtn" onclick="goHome()" class="hidden p-2"><i class="fa-solid fa-chevron-left"></i></button>
                 <h1 id="pageTitle" class="text-xl font-extrabold">KHATA PRO</h1>
             </div>
-            <div class="flex gap-4">
-                <button onclick="toggleTheme()" class="p-2"><i id="themeIcon" class="fa-solid fa-sun"></i></button>
-                <button onclick="openBackup()" class="p-2"><i class="fa-solid fa-cloud-arrow-down"></i></button>
-            </div>
+            <button onclick="openBackup()" class="p-2"><i class="fa-solid fa-cloud-arrow-down"></i></button>
         </div>
         <div id="mainContent" class="flex-1 overflow-y-auto"></div>
-        <div id="footerActions"></div>
     </div>
 
     <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
@@ -52,171 +41,122 @@
     </div>
 
     <script>
-        // Database ഇനീഷ്യലൈസേഷൻ കൂടുതൽ സുരക്ഷിതമാക്കി
-        let db = { customers: [], trans: [], darkMode: true };
-        try {
-            const savedData = localStorage.getItem('KHATA_PRO_V17');
-            if (savedData) db = JSON.parse(savedData);
-        } catch (e) { console.error("Data Load Error"); }
+        // Database ഇനീഷ്യലൈസേഷൻ
+        let db = { customers: [], trans: [] };
+        
+        function loadData() {
+            const saved = localStorage.getItem('KHATA_PRO_DB');
+            if (saved) {
+                db = JSON.parse(saved);
+            }
+            render();
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem('KHATA_PRO_DB', JSON.stringify(db));
+            render();
+        }
 
         let activeCid = null;
 
-        const saveDB = () => { 
-            localStorage.setItem('KHATA_PRO_V17', JSON.stringify(db)); 
-            render(); 
-        };
-
-        const applyTheme = () => {
-            document.body.className = db.darkMode ? 'dark-mode' : 'light-mode';
-            document.getElementById('themeIcon').className = db.darkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        };
-
-        const fmtDate = (d) => {
-            const dt = new Date(d);
-            return `${dt.getDate()}/${dt.getMonth()+1}/${dt.getFullYear()}`;
-        };
-
-        function render() { activeCid ? renderDetails() : renderHome(); }
+        function render() {
+            if (activeCid) {
+                renderDetails();
+            } else {
+                renderHome();
+            }
+        }
 
         function renderHome() {
             activeCid = null;
             document.getElementById('backBtn').classList.add('hidden');
             document.getElementById('pageTitle').innerText = "KHATA PRO";
+            
             let give = 0, got = 0;
             db.trans.forEach(t => t.type === 'GAVE' ? give += t.amt : got += t.amt);
 
-            document.getElementById('mainContent').innerHTML = `
+            let html = `
                 <div class="dashboard-card">
                     <p class="text-white/70 text-xs font-bold uppercase">Total Balance</p>
                     <h2 class="balance-amount">₹${give - got}</h2>
                 </div>
-                <div class="list-container"><div id="custContainer"></div></div>
-                <button class="fab" onclick="openCustomerModal()"><i class="fa-solid fa-plus"></i></button>`;
+                <div class="list-container">
+                    <div id="custContainer">`;
             
-            document.getElementById('footerActions').innerHTML = '';
-            const container = document.getElementById('custContainer');
-            db.customers.forEach((c, i) => {
+            db.customers.forEach(c => {
                 let bal = 0;
                 db.trans.filter(t => t.cid === c.id).forEach(t => bal += (t.type === 'GAVE' ? t.amt : -t.amt));
-                container.innerHTML += `
+                html += `
                     <div class="cust-card" onclick="viewCust(${c.id})">
-                        <div class="avatar w-10 h-10 rounded-full flex items-center justify-center bg-blue-600 text-white font-bold mr-4">${c.name[0].toUpperCase()}</div>
-                        <div class="flex-1"><b>${c.name}</b><br><span class="text-xs opacity-40">${c.phone || ''}</span></div>
-                        <div class="text-right"><b class="${bal >= 0 ? 'text-red-500' : 'text-green-500'}">₹${Math.abs(bal)}</b></div>
-                        <button onclick="event.stopPropagation(); openCustomerModal(${c.id})" class="ml-4 p-2 opacity-30"><i class="fa-solid fa-pen"></i></button>
+                        <div class="flex-1">
+                            <b class="text-lg">${c.name}</b><br>
+                            <span class="text-xs opacity-40">${c.phone || 'No phone'}</span>
+                        </div>
+                        <div class="text-right">
+                            <b class="${bal >= 0 ? 'text-red-500' : 'text-green-500'}">₹${Math.abs(bal)}</b>
+                        </div>
                     </div>`;
             });
+
+            html += `</div></div><button class="fab" onclick="openCustomerModal()"><i class="fa-solid fa-plus"></i></button>`;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        function openCustomerModal() {
+            const overlay = document.getElementById('modalOverlay');
+            const box = document.getElementById('modalBox');
+            box.innerHTML = `
+                <h3 class="font-bold mb-6 text-center text-xl">NEW CUSTOMER</h3>
+                <input type="text" id="newCustName" class="input-field" placeholder="Enter Name Here" autocomplete="off">
+                <input type="number" id="newCustPhone" class="input-field" placeholder="WhatsApp Number">
+                <button type="button" class="btn-save" onclick="handleNewCustomer()">SAVE CUSTOMER</button>
+                <button type="button" class="w-full mt-4 text-white/40" onclick="closeModal()">CANCEL</button>
+            `;
+            overlay.style.display = 'flex';
+            setTimeout(() => box.classList.add('active'), 10);
+        }
+
+        function handleNewCustomer() {
+            const name = document.getElementById('newCustName').value.trim();
+            const phone = document.getElementById('newCustPhone').value.trim();
+
+            if (!name) {
+                alert("Please enter a name!");
+                return;
+            }
+
+            const newCust = {
+                id: Date.now(),
+                name: name,
+                phone: phone
+            };
+
+            db.customers.push(newCust);
+            saveAndRefresh();
+            closeModal();
+            console.log("Customer Added:", name);
+        }
+
+        function viewCust(id) { activeCid = id; render(); }
+        function goHome() { activeCid = null; render(); }
+
+        function closeModal() {
+            document.getElementById('modalBox').classList.remove('active');
+            setTimeout(() => { document.getElementById('modalOverlay').style.display = 'none'; }, 300);
         }
 
         function renderDetails() {
             const cust = db.customers.find(c => c.id === activeCid);
             document.getElementById('backBtn').classList.remove('hidden');
             document.getElementById('pageTitle').innerText = cust.name;
-            let trans = db.trans.filter(t => t.cid === activeCid).sort((a,b) => new Date(a.date) - new Date(b.date));
-            let totalBal = 0;
-            let displayList = [];
-            trans.forEach(t => {
-                totalBal += (t.type === 'GAVE' ? t.amt : -t.amt);
-                displayList.unshift({...t, balAfter: totalBal});
-            });
-
             document.getElementById('mainContent').innerHTML = `
-                <div class="dashboard-card"><h2 class="balance-amount">₹${Math.abs(totalBal)}</h2></div>
-                <div class="list-container">
-                    ${displayList.map(t => `
-                        <div class="trans-card" onclick="openTransModal('${t.type}', ${t.id})">
-                            <div class="text-[11px]"><b>${fmtDate(t.date)}</b></div>
-                            <div class="text-red-500 font-bold text-center">${t.type==='GAVE' ? t.amt : '-'}</div>
-                            <div class="text-green-500 font-bold text-center">${t.type==='GOT' ? t.amt : '-'}</div>
-                            <div class="text-right font-bold">₹${Math.abs(t.balAfter)}</div>
-                            <div class="ml-2 opacity-20"><i class="fa-solid fa-chevron-right text-[10px]"></i></div>
-                        </div>
-                    `).join('')}
-                </div>`;
-            document.getElementById('footerActions').innerHTML = `
-                <div class="footer">
-                    <button class="btn-action bg-red-600" onclick="openTransModal('GAVE')">GAVE ₹</button>
-                    <button class="btn-action bg-green-600" onclick="openTransModal('GOT')">GOT ₹</button>
+                <div class="p-10 text-center opacity-30">
+                    <p>No transactions yet</p>
+                    <button class="mt-4 p-2 bg-blue-600 text-white rounded" onclick="goHome()">BACK TO HOME</button>
                 </div>`;
         }
 
-        function openModal(html) {
-            const box = document.getElementById('modalBox');
-            box.innerHTML = html;
-            document.getElementById('modalOverlay').style.display = 'flex';
-            setTimeout(() => box.classList.add('active'), 10);
-        }
-
-        function closeModal() {
-            document.getElementById('modalBox').classList.remove('active');
-            setTimeout(() => document.getElementById('modalOverlay').style.display = 'none', 300);
-        }
-
-        function openCustomerModal(id = null) {
-            const c = id ? db.customers.find(x => x.id === id) : {name: '', phone: ''};
-            openModal(`
-                <h3 class="font-bold mb-4 text-center">CUSTOMER DETAILS</h3>
-                <input type="text" id="cName" class="input-field" placeholder="Full Name" value="${c.name}">
-                <input type="number" id="cPhone" class="input-field" placeholder="WhatsApp (91...)" value="${c.phone}">
-                <button onclick="saveCustomer(${id})" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold">SAVE NOW</button>
-                ${id ? `<button onclick="deleteCust(${id})" class="w-full mt-4 text-red-500 text-xs font-bold">DELETE</button>` : ''}
-                <button onclick="closeModal()" class="w-full mt-2 py-2 opacity-50">BACK</button>
-            `);
-        }
-
-        function saveCustomer(id) {
-            const nameInp = document.getElementById('cName');
-            const phoneInp = document.getElementById('cPhone');
-            const nameValue = nameInp.value.trim();
-            
-            if(!nameValue) {
-                alert("Please enter a name");
-                return;
-            }
-
-            if(id) {
-                let x = db.customers.find(y => y.id === id);
-                if(x) { x.name = nameValue; x.phone = phoneInp.value.trim(); }
-            } else {
-                db.customers.push({ id: Date.now(), name: nameValue, phone: phoneInp.value.trim() });
-            }
-            saveDB();
-            closeModal();
-        }
-
-        function openTransModal(type, id = null) {
-            const t = id ? db.trans.find(x => x.id === id) : {amt: '', remark: '', date: new Date().toISOString().split('T')[0]};
-            openModal(`
-                <h3 class="font-bold mb-4 text-center">${type} ENTRY</h3>
-                <input type="number" id="tAmt" class="input-field text-center text-2xl" placeholder="0.00" value="${t.amt}">
-                <input type="text" id="tRemark" class="input-field" placeholder="Note" value="${t.remark}">
-                <input type="date" id="tDate" class="input-field" value="${t.date}">
-                <button onclick="saveTrans('${type}', ${id})" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold">SAVE ENTRY</button>
-                <button onclick="closeModal()" class="w-full mt-2 py-2 opacity-50">CANCEL</button>
-            `);
-        }
-
-        function saveTrans(type, id) {
-            const amt = parseFloat(document.getElementById('tAmt').value);
-            if(!amt) return;
-            const date = document.getElementById('tDate').value;
-            const remark = document.getElementById('tRemark').value;
-            if(id) {
-                let x = db.trans.find(y => y.id === id);
-                x.amt = amt; x.remark = remark; x.date = date;
-            } else {
-                db.trans.push({id: Date.now(), cid: activeCid, type, amt, remark, date});
-            }
-            saveDB();
-            closeModal();
-        }
-
-        function viewCust(id) { activeCid = id; render(); }
-        function goHome() { activeCid = null; render(); }
-        function toggleTheme() { db.darkMode = !db.darkMode; applyTheme(); saveDB(); }
-        function deleteCust(id) { if(confirm("Delete Customer?")) { db.customers = db.customers.filter(c => c.id !== id); db.trans = db.trans.filter(t => t.cid !== id); saveDB(); closeModal(); } }
-        
-        window.onload = () => { applyTheme(); render(); };
+        window.onload = loadData;
     </script>
 </body>
 </html>
