@@ -1,1 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KHATA PRO | Customer Edit Fix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s ease; }
+        body.dark-mode { background: #020617; color: #f8fafc; overflow: hidden; }
+        body.light-mode { background: #f1f5f9; color: #0f172a; overflow: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .light-mode .glass { background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(0, 0, 0, 0.05); }
+        .app { width: 100%; max-width: 480px; margin: 0 auto; height: 100vh; display: none; flex-direction: column; }
+        .content-scrollable { flex-grow: 1; overflow-y: auto; padding-bottom: 120px; scrollbar-width: none; }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .btn-gave { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+        .btn-got { background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; overflow: visible !important; }
+            .app { display: block !important; max-width: 100% !important; height: auto !important; }
+            .report-table { width: 100% !important; border: 1px solid #000 !important; border-collapse: collapse; }
+            .report-table th, .report-table td { border: 1px solid #000 !important; padding: 10px !important; color: black !important; }
+        }
+        .report-table { width: 100%; border-collapse: collapse; }
+        .report-table th { background: rgba(128,128,128,0.1); padding: 14px; text-align: left; font-size: 12px; }
+        .report-table td { padding: 14px; border-bottom: 1px solid rgba(128,128,128,0.05); }
+        .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #3b82f6; }
+        .pin-dot.filled { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
+    </style>
+</head>
+<body class="dark-mode">
 
+    <div id="lockScreen" class="fixed inset-0 bg-[#020617] z-[9999] flex flex-col items-center justify-center p-6">
+        <div class="mb-10 text-center">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-2xl shadow-blue-500/20">
+                <i class="fa-solid fa-vault text-3xl text-white"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white uppercase tracking-tighter">Khata Pro <span class="text-blue-500">Gold</span></h2>
+        </div>
+        <div class="flex gap-4 mb-12"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+        <div class="grid grid-cols-3 gap-6">
+            <script>for(let i=1;i<=9;i++) document.write(`<button class="w-16 h-16 rounded-2xl glass text-xl font-bold text-white active:scale-90" onclick="pressKey('${i}')">${i}</button>`);</script>
+            <button class="text-blue-400 font-bold" onclick="clearPin()">CLR</button>
+            <button class="w-16 h-16 rounded-2xl glass text-xl font-bold text-white" onclick="pressKey('0')">0</button>
+            <button class="text-blue-400" onclick="document.getElementById('fIn').click()"><i class="fa-solid fa-cloud-arrow-up text-xl"></i></button>
+        </div>
+        <input type="file" id="fIn" class="hidden" onchange="importJSON(event)">
+    </div>
+
+    <div class="app" id="mainApp">
+        <header class="p-6 flex justify-between items-center no-print">
+            <div class="flex items-center gap-4">
+                <button id="backBtn" onclick="goHome()" class="hidden w-10 h-10 rounded-xl glass flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 id="pageTitle" class="text-xl font-bold">KHATA PRO</h1>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl glass flex items-center justify-center"><i id="themeIcon" class="fa-solid fa-sun"></i></button>
+                <button onclick="location.reload()" class="w-10 h-10 rounded-xl glass flex items-center justify-center"><i class="fa-solid fa-lock"></i></button>
+                <button onclick="openSettings()" class="w-10 h-10 rounded-xl glass flex items-center justify-center"><i class="fa-solid fa-gear"></i></button>
+            </div>
+        </header>
+
+        <div id="topStats" class="no-print"></div>
+        <div id="mainContent" class="content-scrollable"></div>
+        <div id="footerActions" class="fixed bottom-0 w-full max-w-[480px] p-6 no-print"></div>
+    </div>
+
+    <div id="modalOverlay" class="fixed inset-0 bg-black/90 hidden z-[1000] items-end backdrop-blur-sm" onclick="closeModal()">
+        <div id="modalBox" class="w-full max-w-[480px] bg-[#0f172a] p-8 rounded-t-[2.5rem] text-white" onclick="event.stopPropagation()"></div>
+    </div>
+
+    <script>
+        const STORAGE_ID = 'KHATA_STABLE_V16'; 
+        let db = JSON.parse(localStorage.getItem(STORAGE_ID)) || { customers: [], trans: [], darkMode: true, pin: null };
+        let activeCid = null; let currentPinInput = "";
+
+        const saveDB = () => { localStorage.setItem(STORAGE_ID, JSON.stringify(db)); render(); };
+        const getToday = () => new Date().toISOString().split('T')[0];
+        const fmtDate = (d) => d.split('-').reverse().join('/');
+
+        function pressKey(n) { if(currentPinInput.length < 4) { currentPinInput += n; updateDots(); if(currentPinInput.length === 4) setTimeout(checkPin, 200); } }
+        function updateDots() { document.querySelectorAll('.pin-dot').forEach((d, i) => d.classList.toggle('filled', i < currentPinInput.length)); }
+        function clearPin() { currentPinInput = ""; updateDots(); }
+        function checkPin() { if(!db.pin || currentPinInput === db.pin) { db.pin = currentPinInput; unlock(); } else { alert("Wrong PIN"); clearPin(); } }
+        function unlock() { document.getElementById('lockScreen').style.display='none'; document.getElementById('mainApp').style.display='flex'; render(); }
+        function toggleTheme() { db.darkMode = !db.darkMode; render(); }
+
+        function render() {
+            document.body.className = db.darkMode ? 'dark-mode' : 'light-mode';
+            document.getElementById('themeIcon').className = db.darkMode ? 'fa-solid fa-sun text-orange-400' : 'fa-solid fa-moon text-blue-400';
+            activeCid ? renderDetails() : renderHome();
+        }
+
+        function renderHome() {
+            activeCid = null; document.getElementById('backBtn').classList.add('hidden');
+            let give=0, got=0; db.trans.forEach(t => { if(t.type==='GAVE') give+=t.amt; else got+=t.amt; });
+            document.getElementById('topStats').innerHTML = `<div class="px-6 mb-6"><div class="btn-primary p-8 rounded-[2rem] text-center"><p class="text-white/60 text-xs font-bold uppercase mb-1">Total Balance</p><h2 class="text-4xl font-black text-white">₹${(give-got).toLocaleString()}</h2></div></div>`;
+            
+            let html = `<div class="px-6 pb-32">`;
+            db.customers.sort((a,b)=>a.name.localeCompare(b.name)).forEach((c) => {
+                let bal = 0; db.trans.filter(t => t.cid === c.id).forEach(t => bal += (t.type === 'GAVE' ? t.amt : -t.amt));
+                html += `
+                <div class="flex items-center p-4 mb-3 rounded-2xl glass group">
+                    <div onclick="activeCid=${c.id};render()" class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold cursor-pointer">${c.name[0]}</div>
+                    <div onclick="activeCid=${c.id};render()" class="flex-1 ml-4 font-bold text-lg cursor-pointer">${c.name}</div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <div class="${bal>=0?'text-red-500':'text-green-500'} font-black">₹${Math.abs(bal)}</div>
+                        </div>
+                        <button onclick="openCustomerModal(${c.id})" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs opacity-50 hover:opacity-100"><i class="fa-solid fa-user-pen"></i></button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('mainContent').innerHTML = html + `</div><button class="fixed bottom-24 right-8 w-16 h-16 btn-primary text-white rounded-2xl shadow-2xl flex items-center justify-center active:scale-90" onclick="openCustomerModal()"><i class="fa-solid fa-plus text-xl"></i></button>`;
+            document.getElementById('footerActions').innerHTML = '';
+        }
+
+        function renderDetails() {
+            const cust = db.customers.find(c => c.id === activeCid);
+            document.getElementById('backBtn').classList.remove('hidden');
+            document.getElementById('pageTitle').innerText = cust.name;
+            let trans = db.trans.filter(t => t.cid === activeCid).sort((a,b)=> a.date.localeCompare(b.date));
+            let bal = 0;
+            let rows = trans.map(t => {
+                bal += (t.type === 'GAVE' ? t.amt : -t.amt);
+                return `<tr><td class="text-xs opacity-50">${fmtDate(t.date)}</td><td class="text-red-500 font-bold">${t.type==='GAVE'?'₹'+t.amt:'-'}</td><td class="text-green-500 font-bold">${t.type==='GOT'?'₹'+t.amt:'-'}</td><td class="flex justify-between font-black">₹${bal} <button onclick="editTrans(${t.id})" class="no-print opacity-30"><i class="fa-solid fa-pen-to-square"></i></button></td></tr>`;
+            }).reverse().join('');
+
+            document.getElementById('topStats').innerHTML = `<div class="px-6 mb-4"><div class="glass p-6 rounded-3xl flex items-center justify-between"><div><p class="text-xs font-bold opacity-40 uppercase">Balance</p><h2 class="text-3xl font-black">₹${Math.abs(bal)}</h2></div><div class="flex gap-2"><button onclick="sendWA(${bal})" class="w-12 h-12 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center text-xl"><i class="fa-brands fa-whatsapp"></i></button><button onclick="openPrintModal()" class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl"><i class="fa-solid fa-print"></i></button></div></div></div>`;
+            document.getElementById('mainContent').innerHTML = `<div class="px-4"><table class="report-table"><thead><tr><th>DATE</th><th>GAVE</th><th>GOT</th><th>BAL</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+            document.getElementById('footerActions').innerHTML = `<div class="flex gap-4"><button class="flex-1 p-5 btn-gave text-white rounded-2xl font-black shadow-lg" onclick="openTransModal('GAVE')">YOU GAVE</button><button class="flex-1 p-5 btn-got text-white rounded-2xl font-black shadow-lg" onclick="openTransModal('GOT')">YOU GOT</button></div>`;
+        }
+
+        // --- CUSTOMER EDIT & DELETE LOGIC ---
+        function openCustomerModal(id = null) {
+            const c = id ? db.customers.find(x => x.id === id) : { name: '', phone: '' };
+            let deleteBtn = id ? `<button class="w-full p-4 bg-red-500/10 text-red-500 rounded-2xl font-bold mb-4" onclick="deleteCustomer(${id})">DELETE CUSTOMER</button>` : '';
+            
+            openModal(`
+                <h2 class="text-2xl font-black mb-6 text-center">${id ? 'Edit Customer' : 'Add Customer'}</h2>
+                <div class="space-y-4">
+                    <input id="cn" class="w-full glass p-5 rounded-2xl outline-none font-bold" value="${c.name}" placeholder="Name">
+                    <input id="cp" type="number" class="w-full glass p-5 rounded-2xl outline-none font-bold" value="${c.phone}" placeholder="WhatsApp No">
+                    <button class="w-full p-5 btn-primary rounded-2xl font-black" onclick="saveCust(${id})">SAVE DETAILS</button>
+                    ${deleteBtn}
+                </div>`);
+        }
+
+        function deleteCustomer(id) {
+            if(confirm("ഈ കസ്റ്റമറെയും അവരുടെ എല്ലാ കണക്കുകളും ഒഴിവാക്കണോ?")) {
+                db.customers = db.customers.filter(c => c.id !== id);
+                db.trans = db.trans.filter(t => t.cid !== id);
+                saveDB(); closeModal();
+            }
+        }
+
+        function showPreview() {
+            const start = document.getElementById('pFrom').value;
+            const end = document.getElementById('pTo').value;
+            if(!start || !end) return;
+            const filtered = db.trans.filter(t => t.cid === activeCid && t.date >= start && t.date <= end).sort((a,b)=> a.date.localeCompare(b.date));
+            if(filtered.length === 0) return alert("No data!");
+            let b = 0;
+            let rows = filtered.map(t => { b += (t.type === 'GAVE' ? t.amt : -t.amt); return `<tr><td>${fmtDate(t.date)}</td><td>${t.type==='GAVE'?t.amt:'-'}</td><td>${t.type==='GOT'?t.amt:'-'}</td><td>${b}</td></tr>`; }).join('');
+            const cust = db.customers.find(c => c.id === activeCid);
+            const status = b >= 0 ? `ഞാൻ തരാനുണ്ട്: ₹${Math.abs(b)}` : `നിങ്ങൾ തരാനുണ്ട്: ₹${Math.abs(b)}`;
+            document.getElementById('topStats').innerHTML = "";
+            document.getElementById('mainContent').innerHTML = `<div class="p-8 bg-white text-black min-h-screen"><div class="text-center border-b-2 border-black pb-4 mb-4"><h1 class="text-2xl font-bold uppercase">${cust.name}</h1><p class="text-xs">Period: ${fmtDate(start)} to ${fmtDate(end)}</p></div><table class="report-table"><thead><tr><th>DATE</th><th>GAVE</th><th>GOT</th><th>BAL</th></tr></thead><tbody>${rows}<tr class="font-bold bg-gray-100"><td colspan="3" class="text-right">TOTAL:</td><td>₹${Math.abs(b)}</td></tr></tbody></table><p class="mt-6 text-center font-bold italic">${status}</p><div class="mt-10 no-print flex gap-2"><button class="flex-1 p-4 bg-gray-200 rounded-xl font-bold" onclick="renderDetails()">CANCEL</button><button class="flex-1 p-4 btn-primary text-white rounded-xl font-bold" onclick="window.print()">PRINT NOW</button></div></div>`;
+            closeModal();
+        }
+
+        function sendWA(bal) { const cust = db.customers.find(c => c.id === activeCid); let msg = bal > 0 ? `ഹലോ ${cust.name}, ഞാൻ നിങ്ങൾക്ക് ₹${Math.abs(bal)} തരാനുണ്ട്.` : `ഹലോ ${cust.name}, നിങ്ങൾ എനിക്ക് ₹${Math.abs(bal)} തരാനുണ്ട്.`; window.open(`https://wa.me/91${cust.phone}?text=${encodeURIComponent(msg)}`); }
+        function openPrintModal() { openModal(`<h2 class="text-xl font-bold mb-5 text-center">Filter Report</h2><div class="space-y-4"><input type="date" id="pFrom" class="w-full p-4 glass rounded-xl outline-none" value="${getToday()}"><input type="date" id="pTo" class="w-full p-4 glass rounded-xl outline-none" value="${getToday()}"><button class="w-full p-5 btn-primary rounded-2xl font-black" onclick="showPreview()">PREVIEW</button></div>`); }
+        function openTransModal(type) { openModal(`<h2 class="font-bold mb-4 text-center text-xl">${type}</h2><input id="ta" type="number" class="w-full glass p-5 mb-3 rounded-2xl text-4xl font-black text-center outline-none" placeholder="0"><input id="td" type="date" class="w-full p-4 glass rounded-xl text-center outline-none" value="${getToday()}"><button class="w-full p-5 btn-primary rounded-2xl font-black mt-2" onclick="addTrans('${type}')">SAVE</button>`); }
+        function addTrans(type) { const amt = Number(document.getElementById('ta').value); const date = document.getElementById('td').value; if(amt && date) { db.trans.push({id: Date.now(), cid: activeCid, type, amt, date}); saveDB(); closeModal(); } }
+        function openModal(html) { document.getElementById('modalBox').innerHTML = html; document.getElementById('modalOverlay').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+        function editTrans(id) { const t = db.trans.find(x => x.id === id); openModal(`<h2 class="font-bold mb-4 text-center">Edit Entry</h2><input id="eAmt" type="number" class="w-full glass p-5 mb-3 rounded-2xl text-center text-2xl outline-none" value="${t.amt}"><input id="eDate" type="date" class="w-full glass p-4 rounded-xl text-center outline-none" value="${t.date}"><div class="flex gap-2 mt-4"><button class="flex-1 p-4 bg-red-500/10 text-red-500 rounded-xl font-bold" onclick="if(confirm('Delete?')){db.trans=db.trans.filter(x=>x.id!==${id});saveDB();closeModal();}">DELETE</button><button class="flex-1 p-4 btn-primary text-white rounded-xl font-bold" onclick="updateTrans(${id})">SAVE</button></div>`); }
+        function updateTrans(id) { const t = db.trans.find(x => x.id === id); t.amt = Number(document.getElementById('eAmt').value); t.date = document.getElementById('eDate').value; saveDB(); closeModal(); }
+        function saveCust(id) { let n=document.getElementById('cn').value; if(!n) return; if(id){ let x=db.customers.find(y=>y.id===id); x.name=n; x.phone=document.getElementById('cp').value; }else{ db.customers.push({id:Date.now(), name:n, phone:document.getElementById('cp').value}); } saveDB(); closeModal(); }
+        function openSettings() { openModal(`<h2 class="text-xl font-bold mb-6 text-center">Settings</h2><button class="w-full p-5 glass rounded-2xl flex justify-between font-bold mb-4" onclick="exportJSON()"><span>Cloud Backup</span><i class="fa-solid fa-download"></i></button>`); }
+        function exportJSON() { const b=new Blob([JSON.stringify(db)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='Khata_Gold_Backup.json'; a.click(); }
+        function importJSON(e) { const r=new FileReader(); r.onload=(ev)=>{ try{ db=JSON.parse(ev.target.result); saveDB(); location.reload(); }catch(err){alert("Error!");} }; r.readAsText(e.target.files[0]); }
+        function goHome() { activeCid = null; render(); }
+    </script>
+</body>
+</html>
