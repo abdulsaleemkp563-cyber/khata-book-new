@@ -1,1 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KHATA | NEON ELITE V9</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s ease; }
+        body.dark-mode { background: #020617; color: #f8fafc; }
+        body.light-mode { background: #f1f5f9; color: #0f172a; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .app { width: 100%; max-width: 480px; margin: 0 auto; height: 100vh; display: none; flex-direction: column; }
+        .content-scrollable { flex-grow: 1; overflow-y: auto; padding-bottom: 140px; scrollbar-width: none; }
+        .neon-btn { background: linear-gradient(135deg, #22c55e 0%, #10b981 100%); color: white; box-shadow: 0 10px 20px -10px #10b981; }
+        .cust-card { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; margin-bottom: 10px; border-radius: 20px; }
+        .promise-chip { background: rgba(234, 179, 8, 0.1); border-left: 4px solid #eab308; padding: 12px 15px; border-radius: 15px; margin-bottom: 10px; }
+        @media print { body { background: white !important; color: black !important; } .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="dark-mode">
 
+    <div id="lockScreen" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 bg-[#020617]">
+        <div class="mb-10 text-center">
+            <div class="w-20 h-20 bg-green-500/10 rounded-3xl mx-auto mb-6 flex items-center justify-center border border-green-500/30"><i class="fa-solid fa-lock text-3xl text-green-500"></i></div>
+            <h2 class="text-2xl font-black text-white tracking-widest uppercase">Khata <span class="text-green-500">Elite</span></h2>
+        </div>
+        <div class="flex gap-4 mb-12"><div class="w-3 h-3 border-2 border-green-500 rounded-full pin-dot"></div><div class="w-3 h-3 border-2 border-green-500 rounded-full pin-dot"></div><div class="w-3 h-3 border-2 border-green-500 rounded-full pin-dot"></div><div class="w-3 h-3 border-2 border-green-500 rounded-full pin-dot"></div></div>
+        <div class="grid grid-cols-3 gap-6"><script>for(let i=1;i<=9;i++) document.write(`<button class="w-16 h-16 rounded-2xl glass text-2xl font-bold text-white active:bg-green-500" onclick="pressKey('${i}')">${i}</button>`);</script><button class="text-gray-500 font-bold" onclick="currentPinInput='';updateDots()">CLR</button><button class="w-16 h-16 rounded-2xl glass text-2xl font-bold text-white" onclick="pressKey('0')">0</button></div>
+    </div>
+
+    <div class="app" id="mainApp">
+        <header class="p-6 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <button id="backBtn" onclick="goHome()" class="hidden w-10 h-10 rounded-xl glass flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+                <h1 id="pageTitle" class="text-xl font-black text-green-500 uppercase">KHATA PRO</h1>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="togglePrivacy()" class="w-10 h-10 rounded-xl glass flex items-center justify-center text-yellow-500"><i id="privacyIcon" class="fa-solid fa-eye"></i></button>
+                <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl glass flex items-center justify-center text-orange-400"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
+                <button onclick="openSettings()" class="w-10 h-10 rounded-xl glass flex items-center justify-center text-blue-400"><i class="fa-solid fa-sliders"></i></button>
+            </div>
+        </header>
+
+        <div id="topStats" class="px-6 mb-4"></div>
+        <div id="mainContent" class="content-scrollable"></div>
+        <div id="footerActions" class="fixed bottom-0 w-full max-w-[480px] p-6"></div>
+    </div>
+
+    <div id="modalOverlay" class="fixed inset-0 bg-black/95 hidden z-[1000] items-center justify-center p-6 backdrop-blur-md" onclick="closeModal()"><div id="modalBox" class="w-full glass p-8 rounded-[2rem] text-white" onclick="event.stopPropagation()"></div></div>
+
+    <script>
+        const STORAGE_ID = 'KHATA_STABLE_V16'; 
+        let db = JSON.parse(localStorage.getItem(STORAGE_ID)) || { customers: [], trans: [], promises: [], darkMode: true, pin: '1234', upi: '', privacy: false };
+        let activeCid = null; let currentPinInput = ""; let searchQuery = "";
+
+        const saveDB = () => { localStorage.setItem(STORAGE_ID, JSON.stringify(db)); render(); };
+        const getToday = () => new Date().toISOString().split('T')[0];
+        const fmtDate = (d) => d ? d.split('-').reverse().join('/') : '';
+
+        function pressKey(n) { if(currentPinInput.length < 4) { currentPinInput += n; updateDots(); if(currentPinInput.length === 4) setTimeout(checkPin, 200); } }
+        function updateDots() { document.querySelectorAll('.pin-dot').forEach((d, i) => d.style.background = i < currentPinInput.length ? '#10b981' : 'transparent'); }
+        function checkPin() { if(currentPinInput === db.pin) unlock(); else { alert("WRONG PIN"); currentPinInput = ""; updateDots(); } }
+        function unlock() { document.getElementById('lockScreen').style.display='none'; document.getElementById('mainApp').style.display='flex'; render(); }
+        
+        function render() {
+            document.body.className = db.darkMode ? 'dark-mode' : 'light-mode';
+            document.getElementById('themeIcon').className = db.darkMode ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+            document.getElementById('privacyIcon').className = db.privacy ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+            activeCid ? renderDetails() : renderHome();
+        }
+
+        function renderHome() {
+            activeCid = null; document.getElementById('backBtn').classList.add('hidden');
+            let give=0, got=0; db.trans.forEach(t => { if(t.type==='GAVE') give+=t.amt; else got+=t.amt; });
+            document.getElementById('topStats').innerHTML = `
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="glass p-5 rounded-3xl border-l-4 border-red-500"><p class="text-[10px] opacity-50 font-bold uppercase mb-1">Total Gave</p><h2 class="text-xl font-black text-red-500 ${db.privacy?'blur-sm':''}">₹${give}</h2></div>
+                    <div class="glass p-5 rounded-3xl border-l-4 border-green-500"><p class="text-[10px] opacity-50 font-bold uppercase mb-1">Total Got</p><h2 class="text-xl font-black text-green-500 ${db.privacy?'blur-sm':''}">₹${got}</h2></div>
+                </div>
+                <div class="glass p-3 rounded-2xl flex items-center gap-3"><i class="fa-solid fa-search opacity-30"></i><input type="text" oninput="searchQuery=this.value;renderList()" placeholder="Search Name..." class="bg-transparent outline-none w-full font-bold"></div>
+            `;
+            renderList();
+        }
+
+        function renderList() {
+            let html = `<div class="px-6 pb-32">`;
+            if(db.promises && db.promises.length > 0 && searchQuery === "") {
+                html += `<div class="mb-6"><p class="text-[10px] opacity-50 font-black mb-3 uppercase tracking-widest">Pending Promises</p>`;
+                db.promises.forEach(p => {
+                    const c = db.customers.find(x => x.id === p.cid);
+                    if(c) {
+                        html += `<div class="promise-chip flex justify-between items-center">
+                            <div onclick="activeCid=${c.id};render()">
+                                <div class="text-[10px] font-bold text-yellow-500 uppercase">${c.name}</div>
+                                <div class="font-black text-sm">₹${p.amt} on ${fmtDate(p.date)}</div>
+                            </div>
+                            <button onclick="deletePromise(${p.id})" class="text-red-500 p-2"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>`;
+                    }
+                });
+                html += `</div>`;
+            }
+            let filtered = db.customers.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            html += `<p class="text-[10px] opacity-50 font-black mb-3 uppercase tracking-widest">Customers</p>`;
+            filtered.sort((a,b)=>a.name.localeCompare(b.name)).forEach((c) => {
+                let bal = 0; db.trans.filter(t => t.cid === c.id).forEach(t => bal += (t.type === 'GAVE' ? t.amt : -t.amt));
+                html += `<div class="cust-card glass active:scale-95" onclick="activeCid=${c.id};render()"><div><div class="text-lg font-bold">${c.name}</div></div><div class="text-right ${bal>=0?'text-red-500':'text-green-500'} font-black text-lg ${db.privacy?'blur-sm':''}">₹${Math.abs(bal)}</div></div>`;
+            });
+            document.getElementById('mainContent').innerHTML = html + `</div><button class="fixed bottom-28 right-8 w-14 h-14 neon-btn rounded-2xl shadow-xl flex items-center justify-center text-xl" onclick="openCustomerModal()"><i class="fa-solid fa-plus"></i></button>`;
+        }
+
+        function renderDetails() {
+            const cust = db.customers.find(c => c.id === activeCid);
+            document.getElementById('backBtn').classList.remove('hidden');
+            document.getElementById('pageTitle').innerText = cust.name;
+            let trans = db.trans.filter(t => t.cid === activeCid).sort((a,b)=> a.date.localeCompare(b.date));
+            let bal = 0;
+            let rows = trans.map(t => { bal += (t.type === 'GAVE' ? t.amt : -t.amt); return `<tr class="border-b border-white/5"><td class="py-4 text-[11px] opacity-40">${fmtDate(t.date)}</td><td class="text-red-500 font-bold">₹${t.type==='GAVE'?t.amt:'-'}</td><td class="text-green-500 font-bold">₹${t.type==='GOT'?t.amt:'-'}</td><td class="text-right font-black">₹${bal}</td></tr>`; }).reverse().join('');
+            
+            let p = db.promises?.find(p => p.cid === activeCid);
+            let pBox = p ? `<div class="px-6 mb-4"><div class="p-4 glass border-l-4 border-yellow-500 flex justify-between items-center bg-yellow-500/5"><div><p class="text-[10px] text-yellow-500 font-bold uppercase">Promise Date</p><h4 class="font-black text-sm">₹${p.amt} on ${fmtDate(p.date)}</h4></div><div class="flex gap-2"><button onclick="deletePromise(${p.id})" class="text-red-500 p-2"><i class="fa-solid fa-trash-can text-lg"></i></button><button onclick="completePromise(${p.id})" class="bg-green-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold">Paid</button></div></div></div>` : '';
+
+            document.getElementById('topStats').innerHTML = `<div class="glass p-6 rounded-[2rem]">
+                <div class="flex justify-between items-center mb-4">
+                    <div><p class="text-[10px] opacity-40 font-bold uppercase leading-none">Net Balance</p><h2 class="text-3xl font-black ${bal>=0?'text-red-500':'text-green-500'}">₹${Math.abs(bal)}</h2></div>
+                    <div class="flex gap-2">
+                        <button onclick="openPrintModal()" class="w-10 h-10 rounded-xl glass text-blue-400 flex items-center justify-center"><i class="fa-solid fa-print"></i></button>
+                        <button onclick="showQR(${Math.abs(bal)})" class="w-10 h-10 rounded-xl glass text-purple-400 flex items-center justify-center"><i class="fa-solid fa-qrcode"></i></button>
+                        <button onclick="sendWA(${bal})" class="w-10 h-10 rounded-xl glass text-green-500 flex items-center justify-center"><i class="fa-brands fa-whatsapp text-xl"></i></button>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center opacity-60">
+                    <span class="text-xs font-bold"><i class="fa-solid fa-phone mr-1"></i> ${cust.phone || 'No No.'}</span>
+                    <button onclick="openEditCustomerModal()" class="text-[10px] bg-white/10 px-3 py-1 rounded-lg uppercase font-black"><i class="fa-solid fa-pen mr-1"></i> Edit Account</button>
+                </div>
+            </div>`;
+            document.getElementById('mainContent').innerHTML = pBox + `<div class="px-6"><table class="w-full text-sm"><thead><tr class="opacity-30 text-[10px] text-left"><th>DATE</th><th>GAVE</th><th>GOT</th><th class="text-right">BAL</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+            document.getElementById('footerActions').innerHTML = `<div class="flex gap-4"><button class="flex-1 p-4 bg-red-600 text-white rounded-2xl font-black text-lg" onclick="openTransModal('GAVE')">GAVE</button><button class="flex-1 p-4 bg-green-600 text-white rounded-2xl font-black text-lg" onclick="openTransModal('GOT')">GOT</button><button onclick="openPromiseModal()" class="w-16 p-4 glass text-yellow-500 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-calendar-plus text-2xl"></i></button></div>`;
+        }
+
+        // FINAL PRINT FIX: GENERATING A STATIC PAGE THAT ANDROID CANNOT FAIL
+        function generatePrint() {
+            const start = document.getElementById('pFrom').value;
+            const end = document.getElementById('pTo').value;
+            if(!start || !end) return alert("Select Dates!");
+
+            const cust = db.customers.find(c => c.id === activeCid);
+            const filtered = db.trans.filter(t => t.cid === activeCid && t.date >= start && t.date <= end).sort((a,b)=>a.date.localeCompare(b.date));
+            
+            let runningBal = 0;
+            let rowsHtml = filtered.map(t => {
+                runningBal += (t.type === 'GAVE' ? t.amt : -t.amt);
+                return `<tr>
+                    <td style="border:1px solid #000;padding:10px;font-size:14px;">${fmtDate(t.date)}</td>
+                    <td style="border:1px solid #000;padding:10px;font-size:14px;color:red;">${t.type==='GAVE' ? '₹'+t.amt : '-'}</td>
+                    <td style="border:1px solid #000;padding:10px;font-size:14px;color:green;">${t.type==='GOT' ? '₹'+t.amt : '-'}</td>
+                    <td style="border:1px solid #000;padding:10px;font-size:14px;text-align:right;font-weight:bold;">₹${runningBal}</td>
+                </tr>`;
+            }).join('');
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html><head><title>Statement_${cust.name}</title>
+                <style>
+                    body{font-family:sans-serif;padding:20px;background:#fff;color:#000;}
+                    table{width:100%;border-collapse:collapse;margin-top:20px;}
+                    th{background:#eee;border:1px solid #000;padding:12px;text-align:left;font-size:14px;}
+                    .header{text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:10px;}
+                </style></head>
+                <body>
+                    <div class="header">
+                        <h1 style="margin:0;">${cust.name}</h1>
+                        <p style="margin:5px 0;">Account Statement: ${fmtDate(start)} to ${fmtDate(end)}</p>
+                    </div>
+                    <table>
+                        <thead><tr><th>Date</th><th>Gave (Debit)</th><th>Got (Credit)</th><th style="text-align:right">Balance</th></tr></thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                    <div style="margin-top:20px;text-align:right;">
+                        <h2 style="margin:0;">Final Balance: ₹${Math.abs(runningBal)}</h2>
+                        <p style="font-size:12px;opacity:0.6;">Generated on: ${new Date().toLocaleString()}</p>
+                    </div>
+                </body></html>
+            `);
+            printWindow.document.close();
+            
+            // Critical: Wait for Chrome to fully paint the new window before printing
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+                printWindow.onafterprint = () => printWindow.close();
+            }, 1000);
+            
+            closeModal();
+        }
+
+        // REMAINING FUNCTIONS
+        function deletePromise(id) { if(confirm('Delete Promise?')) { db.promises = db.promises.filter(p => p.id !== id); saveDB(); } }
+        function completePromise(id) { const p = db.promises.find(x => x.id === id); db.trans.push({id: Date.now(), cid: p.cid, type: 'GOT', amt: p.amt, date: getToday()}); db.promises = db.promises.filter(x => x.id !== id); saveDB(); }
+        function toggleTheme() { db.darkMode = !db.darkMode; saveDB(); }
+        function togglePrivacy() { db.privacy = !db.privacy; saveDB(); }
+        function openEditCustomerModal() { const cust = db.customers.find(c => c.id === activeCid); openModal(`<h2 class="text-lg font-bold mb-4">Edit Profile</h2><input id="en" class="w-full glass p-4 rounded-xl mb-3 bg-transparent font-bold" value="${cust.name}"><input id="ep" type="number" class="w-full glass p-4 rounded-xl mb-6 bg-transparent" value="${cust.phone||''}"><div class="flex gap-2"><button class="flex-1 p-4 bg-red-500/20 text-red-500 rounded-xl font-bold" onclick="deleteCustomer(${cust.id})">DELETE</button><button class="flex-1 p-4 neon-btn rounded-xl font-bold" onclick="updateCustomer(${cust.id})">UPDATE</button></div>`); }
+        function updateCustomer(id) { const n=document.getElementById('en').value; const p=document.getElementById('ep').value; if(n){ const idx=db.customers.findIndex(c=>c.id===id); db.customers[idx].name=n; db.customers[idx].phone=p; saveDB(); closeModal(); } }
+        function deleteCustomer(id) { if(confirm('Delete Account?')) { db.customers=db.customers.filter(c=>c.id!==id); db.trans=db.trans.filter(t=>t.cid!==id); saveDB(); goHome(); closeModal(); } }
+        function openPrintModal() { openModal(`<h2 class="text-lg font-bold mb-4">Print Report</h2><input type="date" id="pFrom" class="w-full p-4 glass rounded-xl mb-4 bg-transparent outline-none"><input type="date" id="pTo" class="w-full p-4 glass rounded-xl mb-6 bg-transparent outline-none" value="${getToday()}"><button class="w-full p-4 neon-btn rounded-xl font-bold" onclick="generatePrint()">GET STATEMENT</button>`); }
+        function openTransModal(type) { openModal(`<h2 class="font-bold mb-4 text-center uppercase">${type}</h2><input id="ta" type="number" class="w-full glass p-6 mb-4 rounded-3xl text-3xl font-black text-center bg-transparent outline-none" placeholder="₹ 0" autofocus><input id="td" type="date" class="w-full p-4 glass rounded-xl mb-6 bg-transparent" value="${getToday()}"><button class="w-full p-4 neon-btn rounded-xl font-bold" onclick="const a=Number(document.getElementById('ta').value); if(a){db.trans.push({id:Date.now(),cid:activeCid,type,amt:a,date:document.getElementById('td').value});saveDB();closeModal();}">SAVE</button>`); }
+        function openPromiseModal() { openModal(`<h2 class="text-lg font-bold mb-4">Set Promise</h2><input id="pa" type="number" class="w-full glass p-6 mb-4 rounded-3xl text-3xl font-black text-center bg-transparent outline-none" placeholder="₹ 0"><input id="pd" type="date" class="w-full p-4 glass rounded-xl mb-6 bg-transparent" value="${getToday()}"><button class="w-full p-4 neon-btn rounded-xl font-bold" onclick="const a=Number(document.getElementById('pa').value); if(a){if(!db.promises)db.promises=[]; db.promises=db.promises.filter(p=>p.cid!==activeCid); db.promises.push({id:Date.now(),cid:activeCid,amt:a,date:document.getElementById('pd').value});saveDB();closeModal();}">SET</button>`); }
+        function openCustomerModal() { openModal(`<h2 class="text-lg font-bold mb-4">New Account</h2><input id="cn" class="w-full glass p-4 rounded-xl mb-3 bg-transparent font-bold" placeholder="Name"><input id="cp" type="number" class="w-full glass p-4 rounded-xl mb-6 bg-transparent" placeholder="Phone"><button class="w-full p-4 neon-btn rounded-xl font-bold uppercase" onclick="const n=document.getElementById('cn').value; if(n){db.customers.push({id:Date.now(),name:n,phone:document.getElementById('cp').value});saveDB();closeModal();}">CREATE</button>`); }
+        function openSettings() { openModal(`<h2 class="text-xl font-bold mb-6 text-center">Settings</h2><div class="space-y-4"><input id="upiInput" class="w-full p-4 glass rounded-xl bg-transparent" placeholder="UPI ID" value="${db.upi||''}"><button class="w-full p-4 neon-btn rounded-xl font-bold" onclick="db.upi=document.getElementById('upiInput').value;saveDB();closeModal();">Save UPI</button><hr class="opacity-10"><button class="w-full p-4 glass rounded-xl flex justify-between" onclick="downloadBackup()"><span>Export Data</span><i class="fa-solid fa-download"></i></button><div class="relative w-full p-4 glass rounded-xl flex justify-between"><span>Import Data</span><i class="fa-solid fa-upload"></i><input type="file" class="absolute inset-0 opacity-0" onchange="restoreBackup(event)"></div></div>`); }
+        function downloadBackup() { const b=new Blob([JSON.stringify(db)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`Khata_Backup.json`; a.click(); }
+        function restoreBackup(e) { const r=new FileReader(); r.onload=(v)=>{ db=JSON.parse(v.target.result); saveDB(); alert("Restored!"); }; r.readAsText(e.target.files[0]); }
+        function sendWA(bal) { const c=db.customers.find(x=>x.id===activeCid); let msg=`*Statement*\n*${c.name}*\nBalance: ₹*${Math.abs(bal)}*\nDate: ${new Date().toLocaleDateString('en-GB')}`; window.open(`https://wa.me/91${c.phone}?text=${encodeURIComponent(msg)}`); }
+        function showQR(amt) { if(!db.upi) return alert("Settings-ൽ UPI ID നൽകുക!"); openModal(`<div class="text-center p-4 bg-white rounded-3xl text-black"><h2 class="font-black text-xl mb-4 uppercase">${db.customers.find(c=>c.id===activeCid).name}</h2><div id="qrcode"></div><p class="mt-4 font-bold">Pay: ₹${amt}</p></div>`); new QRCode(document.getElementById("qrcode"), { text: `upi://pay?pa=${db.upi}&am=${amt}&cu=INR`, width: 220, height: 220 }); }
+        function openModal(h) { document.getElementById('modalBox').innerHTML = h; document.getElementById('modalOverlay').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+        function goHome() { activeCid = null; render(); }
+        render();
+    </script>
+</body>
+</html>
