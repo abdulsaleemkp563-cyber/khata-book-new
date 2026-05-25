@@ -70,26 +70,57 @@
         
         .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+
+        /* ADVANCED SECURE PAD STYLES */
+        .secure-key-pad-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            font-size: 1.65rem;
+            font-weight: 800;
+            border-radius: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .secure-key-pad-btn:active {
+            background: linear-gradient(135deg, #facc15 0%, #eab308 100%) !important;
+            color: #000000 !important;
+            transform: scale(0.92);
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.5);
+            border-color: transparent;
+        }
     </style>
 </head>
 <body class="light-mode h-full w-full flex flex-col overflow-hidden">
 
-    <div id="lockScreen" class="fixed inset-0 bg-[#0b0f1a] z-[9999] flex flex-col items-center justify-center p-8">
-        <div class="mb-8 text-center text-white">
-            <div class="w-16 h-16 bg-emerald-600 rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-2xl"><i class="fa-solid fa-shield-halved text-3xl"></i></div>
-            <h2 class="text-xl font-black uppercase tracking-widest">Khata Pro Secure</h2>
+    <div id="lockScreen" class="fixed inset-0 bg-[#0c101d] z-[9999] flex flex-col items-center justify-between py-12 px-8 select-none">
+        <div class="text-center mt-4">
+            <div class="w-20 h-20 bg-gradient-to-b from-emerald-500 to-teal-700 rounded-3xl mx-auto mb-5 flex items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20">
+                <i class="fa-solid fa-shield-halved text-4xl text-white drop-shadow-md"></i>
+            </div>
+            <h2 class="text-xl font-black text-white uppercase tracking-widest text-center">Khata Pro Secure</h2>
+            <p class="text-[11px] text-slate-400 font-bold uppercase mt-1 tracking-wider opacity-60">Enter Access PIN</p>
         </div>
-        <div class="flex gap-4 mb-10">
-            <div id="dot-0" class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500"></div>
-            <div id="dot-1" class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500"></div>
-            <div id="dot-2" class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500"></div>
-            <div id="dot-3" class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500"></div>
+
+        <div class="flex gap-5 my-4 bg-black/30 px-6 py-3.5 rounded-full border border-white/5">
+            <div id="dot-0" class="w-4 h-4 rounded-full border-2 border-emerald-500/50 transition-all duration-200"></div>
+            <div id="dot-1" class="w-4 h-4 rounded-full border-2 border-emerald-500/50 transition-all duration-200"></div>
+            <div id="dot-2" class="w-4 h-4 rounded-full border-2 border-emerald-500/50 transition-all duration-200"></div>
+            <div id="dot-3" class="w-4 h-4 rounded-full border-2 border-emerald-500/50 transition-all duration-200"></div>
         </div>
-        <div class="grid grid-cols-3 gap-4 w-full max-w-[270px]">
-            <script>for(let i=1;i<=9;i++) document.write(`<button class="aspect-square rounded-2xl bg-white/5 text-xl font-bold text-white active:bg-emerald-600" onclick="pressKey('${i}')">${i}</button>`);</script>
-            <button class="text-slate-400 font-bold text-sm" onclick="currentPinInput='';updateDots()">CLR</button>
-            <button class="aspect-square rounded-2xl bg-white/5 text-xl font-bold text-white active:bg-emerald-600" onclick="pressKey('0')">0</button>
-            <button class="text-red-500 font-bold text-xs" onclick="resetPin()">RESET</button>
+
+        <div class="w-full max-w-[320px] grid grid-cols-3 gap-4 mb-4">
+            <script>
+                for(let i=1; i<=9; i++) {
+                    document.write(`<button class="secure-key-pad-btn aspect-square" onclick="pressKey('${i}')">${i}</button>`);
+                }
+            </script>
+            <button class="text-slate-400 active:text-white font-extrabold text-sm tracking-wider uppercase flex items-center justify-center transition-all" onclick="currentPinInput='';updateDots()">CLR</button>
+            <button class="secure-key-pad-btn aspect-square" onclick="pressKey('0')">0</button>
+            <button class="text-red-500 active:text-red-400 font-extrabold text-sm tracking-wider uppercase flex items-center justify-center transition-all" onclick="resetPin()">RESET</button>
         </div>
     </div>
 
@@ -99,9 +130,10 @@
             <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center gap-3 overflow-hidden">
                     <button id="backBtn" onclick="goHome()" class="hidden text-xl mr-1"><i class="fa-solid fa-arrow-left"></i></button>
-                    <h1 id="pageTitle" class="text-base font-black truncate max-w-[220px] uppercase tracking-wide">ASMA'S ONLINE SERVICE</h1>
+                    <h1 id="pageTitle" class="text-base font-black truncate max-w-[180px] uppercase tracking-wide">ASMA'S ONLINE SERVICE</h1>
                 </div>
                 <div class="flex gap-1.5 shrink-0">
+                    <button id="custActionsMenuBtn" onclick="openActionsHubModal()" class="hidden icon-btn-box text-amber-400 animate-pulse"><i class="fa-solid fa-bolt text-lg"></i></button>
                     <button id="custEditBtn" onclick="openCustModal(activeCid)" class="hidden icon-btn-box text-blue-400"><i class="fa-solid fa-user-pen"></i></button>
                     <button onclick="toggleTheme()" class="icon-btn-box"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
                     <button onclick="lockApp()" class="icon-btn-box text-red-400"><i class="fa-solid fa-lock"></i></button>
@@ -162,7 +194,7 @@
                     <div id="dailyRow" class="grid grid-cols-2 gap-3 py-0.5"></div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto mt-1 custom-scroll w-full" style="margin-bottom: 60px;">
+                <div class="flex-1 overflow-y-auto mt-1 custom-scroll w-full" style="margin-bottom: 80px;">
                     <table class="trans-table">
                         <thead class="sticky top-0 bg-[#f8fafc] dark:bg-[#1a3c30] z-10">
                             <tr class="text-slate-400 dark:text-slate-500">
@@ -176,7 +208,9 @@
                     </table>
                 </div>
 
-                <div id="footerActions" class="absolute bottom-0 left-0 right-0 p-3 bg-transparent backdrop-blur-md flex gap-4 z-40"></div>
+                <div class="absolute bottom-0 left-0 right-0 z-40 flex flex-col bg-transparent backdrop-blur-md pb-3 px-1">
+                    <div id="footerActions" class="flex gap-4"></div>
+                </div>
             </div>
 
         </div>
@@ -197,7 +231,6 @@
 
         const saveDB = () => { localStorage.setItem(STORAGE_ID, JSON.stringify(db)); render(); };
         const getToday = () => new Date().toISOString().split('T')[0];
-        
         const fmtDate = (d) => d ? d.split('-').reverse().join('/').substring(0,5) : '';
         
         function toggleTheme() { db.darkMode = !db.darkMode; saveDB(); }
@@ -213,13 +246,24 @@
             if(currentPinInput.length < 4) { 
                 currentPinInput += n; 
                 updateDots(); 
-                if(currentPinInput.length === 4) setTimeout(checkPin, 200); 
+                if(currentPinInput.length === 4) setTimeout(checkPin, 180); 
             } 
         }
         
         function updateDots() { 
             for(let i=0; i<4; i++) {
-                document.getElementById(`dot-${i}`).style.background = i < currentPinInput.length ? '#10b981' : 'transparent';
+                const el = document.getElementById(`dot-${i}`);
+                if(i < currentPinInput.length) {
+                    el.style.background = '#10b981';
+                    el.style.borderColor = '#34d399';
+                    el.style.transform = 'scale(1.2)';
+                    el.style.boxShadow = '0 0 10px #10b981';
+                } else {
+                    el.style.background = 'transparent';
+                    el.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                    el.style.transform = 'scale(1)';
+                    el.style.boxShadow = 'none';
+                }
             }
         }
         
@@ -229,7 +273,7 @@
                 document.getElementById('mainApp').style.display = 'flex'; 
                 render(); 
             } else { 
-                alert("Wrong PIN"); 
+                alert("Wrong Access PIN!"); 
                 currentPinInput = ""; 
                 updateDots(); 
             } 
@@ -328,17 +372,53 @@
             renderDetails();
         }
 
+        function openActionsHubModal() {
+            const cust = db.customers.find(c => c.id === activeCid);
+            if(!cust) return;
+            
+            let rb = 0;
+            db.trans.filter(t => t.cid === activeCid).forEach(t => rb += (t.type === 'GAVE' ? t.amt : -t.amt));
+
+            openModal(`
+                <h2 class="text-base font-black mb-5 text-center uppercase tracking-wider text-slate-800 dark:text-white">Client Quick Actions</h2>
+                <div class="grid grid-cols-5 gap-3 pb-4">
+                    <button onclick="closeModal(); shareWA('${cust.phone}', ${rb.toFixed(2)})" class="aspect-square bg-green-500 text-white rounded-2xl flex flex-col items-center justify-center shadow-md active:scale-95 transition">
+                        <i class="fa-brands fa-whatsapp text-xl"></i>
+                        <span class="text-[9px] font-bold mt-1">Share</span>
+                    </button>
+                    <button onclick="closeModal(); openQR(${Math.abs(rb).toFixed(2)})" class="aspect-square bg-purple-600 text-white rounded-2xl flex flex-col items-center justify-center shadow-md active:scale-95 transition">
+                        <i class="fa-solid fa-qrcode text-xl"></i>
+                        <span class="text-[9px] font-bold mt-1">QR Pay</span>
+                    </button>
+                    <button onclick="closeModal(); openPDFModal()" class="aspect-square bg-blue-600 text-white rounded-2xl flex flex-col items-center justify-center shadow-md active:scale-95 transition">
+                        <i class="fa-solid fa-file-pdf text-xl"></i>
+                        <span class="text-[9px] font-bold mt-1">PDF</span>
+                    </button>
+                    <button onclick="closeModal(); toggleDateFilterDrawer()" class="aspect-square bg-amber-500 text-white rounded-2xl flex flex-col items-center justify-center shadow-md active:scale-95 transition">
+                        <i class="fa-solid fa-calendar-days text-xl"></i>
+                        <span class="text-[9px] font-bold mt-1">Filter</span>
+                    </button>
+                    <button onclick="closeModal(); openPromiseModal()" class="aspect-square bg-orange-500 text-white rounded-2xl flex flex-col items-center justify-center shadow-md active:scale-95 transition">
+                        <i class="fa-solid fa-calendar-check text-xl"></i>
+                        <span class="text-[9px] font-bold mt-1">Promise</span>
+                    </button>
+                </div>
+                <button class="w-full text-xs text-slate-400 font-bold pt-2 border-t border-slate-500/10" onclick="closeModal()">Close Menu</button>
+            `);
+        }
+
         function renderDetails() {
             const cust = db.customers.find(c => c.id === activeCid);
             if(!cust) { goHome(); return; }
             
             document.getElementById('backBtn').classList.remove('hidden');
             document.getElementById('custEditBtn').classList.remove('hidden');
+            document.getElementById('custActionsMenuBtn').classList.remove('hidden');
             document.getElementById('pageTitle').innerText = cust.name;
             
             let rb = 0, cToday = 0, uToday = 0, mGave = 0, mGot = 0;
-            const today = getToday(), now = new Date();
             
+            const today = getToday(), now = new Date();
             let trans = db.trans.filter(t => t.cid === activeCid).sort((a,b)=> new Date(a.date) - new Date(b.date));
             
             const ledSearch = document.getElementById('ledgerSearchInput') ? document.getElementById('ledgerSearchInput').value.toLowerCase() : "";
@@ -351,7 +431,7 @@
             trans.forEach(t => {
                 const d = new Date(t.date);
                 cumulativeBalance += (t.type === 'GAVE' ? t.amt : -t.amt);
-                rb = cumulativeBalance; // Keep ultimate running balance updated
+                rb = cumulativeBalance;
                 
                 if(d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) { 
                     if(t.type==='GAVE') mGave += t.amt; else mGot += t.amt; 
@@ -387,21 +467,12 @@
                 rowsArray.push(rowHtml);
             });
 
-            // Reverse rows to show latest entry on top
             rowsArray.reverse();
 
             const netValText = rb >= 0 ? "BALANCE" : "ADVANCE";
 
             document.getElementById('topArea').innerHTML = `
                 <div class="space-y-2">
-                    <div class="flex justify-between gap-1.5 mt-0.5">
-                        <button onclick="shareWA('${cust.phone}', ${rb.toFixed(2)})" class="flex-1 bg-green-500/10 hover:bg-green-500/20 h-9 rounded-xl flex items-center justify-center transition"><i class="fa-brands fa-whatsapp text-lg text-green-600"></i></button>
-                        <button onclick="openQR(${Math.abs(rb).toFixed(2)})" class="flex-1 bg-purple-500/10 hover:bg-purple-500/20 h-9 rounded-xl flex items-center justify-center transition"><i class="fa-solid fa-qrcode text-lg text-purple-600"></i></button>
-                        <button onclick="openPDFModal()" class="flex-1 bg-blue-500/10 hover:bg-blue-500/20 h-9 rounded-xl flex items-center justify-center transition"><i class="fa-solid fa-file-pdf text-lg text-blue-600"></i></button>
-                        <button onclick="toggleDateFilterDrawer()" class="flex-1 bg-yellow-500/10 hover:bg-yellow-500/20 h-9 rounded-xl flex items-center justify-center transition"><i class="fa-solid fa-calendar-days text-lg text-amber-600"></i></button>
-                        <button onclick="openPromiseModal()" class="flex-1 bg-orange-500/10 hover:bg-orange-500/20 h-9 rounded-xl flex items-center justify-center transition"><i class="fa-solid fa-calendar-check text-lg text-orange-600"></i></button>
-                    </div>
-                    
                     <div class="yellow-card-premium text-center">
                         <p class="text-[10px] font-black opacity-70 uppercase tracking-widest">${netValText}</p>
                         <h2 class="text-4xl font-black tracking-tight mt-0.5">₹${Math.abs(rb).toFixed(2)}</h2>
@@ -438,6 +509,7 @@
             activeCid = null;
             document.getElementById('backBtn').classList.add('hidden');
             document.getElementById('custEditBtn').classList.add('hidden');
+            document.getElementById('custActionsMenuBtn').classList.add('hidden');
             document.getElementById('pageTitle').innerText = "ASMA'S ONLINE SERVICE";
             
             document.getElementById('ledgerWorkspaceView').classList.add('hidden');
@@ -623,7 +695,7 @@
         // --- PDF ENGINE ---
         function openPDFModal() {
             openModal(`
-                <h2 class="mb-4 font-bold text-center uppercase text-slate-800">GENERATE REPORT</h2>
+                <h2 class="mb-4 font-bold text-center uppercase text-slate-800 dark:text-white">GENERATE REPORT</h2>
                 <div class="space-y-4 text-slate-800">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -724,4 +796,4 @@
         window.onload = () => { lockApp(); };
     </script>
 </body>
-                            </html>
+                </html>
