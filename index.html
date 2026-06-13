@@ -271,6 +271,23 @@
         .text-xl { font-size: 1.25rem; font-weight: 900; }
         .text-2xl { font-size: 1.5rem; font-weight: 900; }
         .text-3xl { font-size: 1.875rem; font-weight: 900; }
+        
+        /* Manual Check Button Style */
+        .manual-check-btn {
+            background: linear-gradient(135deg, #facc15, #f59e0b);
+            color: #0f172a;
+            border: none;
+            border-radius: 16px;
+            padding: 12px 20px;
+            font-weight: 900;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(250, 204, 21, 0.3);
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .manual-check-btn:active { transform: scale(0.96); }
+        body.dark-mode .manual-check-btn { background: linear-gradient(135deg, #facc15, #d97706); }
     </style>
 </head>
 <body class="theme-green h-full w-full overflow-hidden">
@@ -479,6 +496,13 @@
                     </div>
                 </div>
                 <div id="remindersListContainer" class="flex-1 overflow-y-auto custom-scroll pb-2 space-y-2"></div>
+                
+                <!-- Manual Check Button -->
+                <div class="mt-3 px-1 shrink-0">
+                    <button onclick="checkAlarmManually()" class="manual-check-btn">
+                        <i class="fa-solid fa-bell"></i> 🔔 CHECK ALARM NOW
+                    </button>
+                </div>
             </div>
 
             <!-- Vehicle View -->
@@ -790,6 +814,29 @@
                 }
             } catch(e) {
                 console.log('Audio error:', e);
+            }
+        }
+
+        // ==================== MANUAL ALARM CHECK FUNCTION ====================
+        function checkAlarmManually() {
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            let found = false;
+            
+            if (!db.reminders) return;
+            db.reminders.forEach(rem => {
+                if (rem.alertSent) return;
+                // Check if due date is today and time has passed
+                if (rem.dueDate === getToday() && rem.dueTime <= currentTime) {
+                    playAlarmSound();
+                    rem.alertSent = true;
+                    found = true;
+                    saveDB();
+                    alert('🔔 ALARM TRIGGERED!\n' + rem.title);
+                }
+            });
+            if (!found) {
+                alert('No pending alarms for today at this time.');
             }
         }
 
@@ -1542,4 +1589,4 @@
         };
     </script>
 </body>
-</html>
+    </html>
