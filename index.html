@@ -509,7 +509,7 @@
         .more-menu-item:active { transform: scale(0.98); }
         .more-menu-item .icon-wrap { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 17px; color: white; flex-shrink: 0; }
 
-        /* ⭐ NEW VEHICLE CARD DESIGN */
+        /* VEHICLE */
         .vehicle-summary-card {
             background: #ffffff;
             border: 1px solid rgba(59, 130, 246, 0.15);
@@ -672,7 +672,7 @@
                 <button class="lock-key" onclick="pressKey('0')">0</button>
                 <button class="lock-key warn" onclick="fullResetApp()"><i class="fa-solid fa-triangle-exclamation"></i></button>
             </div>
-            <div class="lock-footer">Khata Premium v4.1</div>
+            <div class="lock-footer">Khata Premium v4.2</div>
         </div>
     </div>
 
@@ -853,7 +853,7 @@
                 <div id="remindersListContainer" class="space-y-2"></div>
             </div>
 
-            <!-- ⭐ NEW VEHICLE DESIGN ⭐ -->
+            <!-- VEHICLE -->
             <div id="vehicleWorkspaceView" class="workspace-view">
                 <div class="section-header">
                     <h2 class="text-lg font-black text-blue-800"><i class="fa-solid fa-car text-blue-500"></i> Vehicle</h2>
@@ -1052,7 +1052,7 @@
                     <div><div class="font-bold">DATA</div><div class="text-xs text-gray-500">Backup, Restore, Reset</div></div>
                     <i class="fa-solid fa-chevron-right opacity-40 ml-auto"></i>
                 </div>
-                <div class="text-center text-xs text-gray-400 font-bold py-4">KHATA PRO PREMIUM - V4.1</div>
+                <div class="text-center text-xs text-gray-400 font-bold py-4">KHATA PRO PREMIUM - V4.2</div>
             </div>
 
             <!-- RTO -->
@@ -1135,6 +1135,9 @@
         <div id="modalBox" class="modal-premium" onclick="event.stopPropagation()"></div>
     </div>
 
+    <!-- HIDDEN PRINT FRAME -->
+    <iframe id="printFrame" style="display:none;"></iframe>
+
     <script>
     // ============================================
     // GLOBAL STATE
@@ -1163,7 +1166,7 @@
     let tempPin = '';
 
     // ============================================
-    // UTILS
+    // UTILS & DATA SAVING FIX
     // ============================================
     function saveDB() {
         try {
@@ -1423,7 +1426,7 @@
     }
 
     // ============================================
-    // CLIENTS
+    // CLIENTS & LEDGER (SAVE BUG FIXED)
     // ============================================
     function renderClientListFeed() {
         let filtered = db.customers.filter(c =>
@@ -1507,9 +1510,6 @@
         }
     };
 
-    // ============================================
-    // LEDGER
-    // ============================================
     function renderLedger() {
         const cust = db.customers.find(c => c.id === activeCid);
         if (!cust) { switchView('home'); return; }
@@ -2063,7 +2063,7 @@
     }
 
     // ============================================
-    // ⭐ VEHICLE (REDESIGNED)
+    // VEHICLE
     // ============================================
     window.openVehicleDetail = function(v) {
         currentVehicleDetailName = v;
@@ -2126,7 +2126,6 @@
                 const net = tc - te;
                 const nc = net >= 0 ? 'text-green-600' : 'text-red-600';
                 
-                // ⭐ NEW CARD DESIGN based on screenshot
                 sh += `<div class="vehicle-summary-card">
                     <div class="flex justify-between items-start mb-3 cursor-pointer" onclick="openVehicleDetail('${n}')">
                         <div>
@@ -2141,7 +2140,6 @@
                             <p class="text-xl font-black ${nc}">₹${Math.abs(net).toFixed(0)}</p>
                         </div>
                     </div>
-                    <!-- Big Add Button -->
                     <button onclick="openAddVehicleExpenseModal('${n}')" class="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-black rounded-xl border-0 cursor-pointer shadow-md">
                         <i class="fa-solid fa-plus mr-1"></i> Add Transaction
                     </button>
@@ -2150,7 +2148,6 @@
         }
         sc.innerHTML = sh;
 
-        // Recent Transactions List
         let html = '';
         [...db.vehicleExpenses].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(e => {
             const tl = e.type === 'expense' ? 'Expense' : 'Collection';
@@ -2483,20 +2480,17 @@
         document.getElementById('payTableBody').innerHTML = rows;
     }
 
-    // ⭐ FIXED: Proportional split — Even if payment < interest, some portion goes to principal
     window.openLoanPaymentModal = function(id) {
         const l = db.loans.find(x => x.id === id);
         if (!l) return;
         const b = l.balance || l.amount;
         
-        // Calculate monthly interest
         let monthlyInterest = 0;
         if (l.interestRate > 0) {
             monthlyInterest = (b * (l.interestRate / 100)) / 12;
             monthlyInterest = Math.round(monthlyInterest * 100) / 100;
         }
 
-        // Total payable = principal + interest
         const totalPayable = b + monthlyInterest;
 
         openModal(`<h2 class="font-black text-center text-lg mb-3">💰 Record Payment</h2>
@@ -3133,23 +3127,24 @@
     };
 
     // ============================================
-    // PRINT
+    // PRINT (IFRAME FIX)
     // ============================================
     function openPrintWindow(title, content) {
-        const win = window.open('', '_blank', 'width=900,height=700');
-        if (!win) { alert('Allow popups'); return; }
-        win.document.write(`<!DOCTYPE html><html><head><title>${title}</title><meta charset="UTF-8">
+        const frame = document.getElementById('printFrame');
+        const doc = frame.contentWindow.document;
+        doc.open();
+        doc.write(`<!DOCTYPE html><html><head><title>${title}</title><meta charset="UTF-8">
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { font-family: Arial, sans-serif; padding: 20px; }
-                .print-header { background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
+                .print-header { background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 .print-header h1 { font-size: 24px; }
                 .summary-box { display: flex; justify-content: space-around; background: #f8f7ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
                 .summary-box > div { text-align: center; flex: 1; min-width: 100px; }
                 .summary-box .lbl { font-size: 10px; color: #6b7280; text-transform: uppercase; font-weight: 700; }
                 .summary-box .val { font-size: 18px; font-weight: 900; margin-top: 4px; }
                 table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-                th { background: #7c3aed; color: white; padding: 10px 8px; text-align: left; font-size: 11px; }
+                th { background: #7c3aed; color: white; padding: 10px 8px; text-align: left; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 td { padding: 9px 8px; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
                 tr:nth-child(even) td { background: #fafafa; }
                 .text-right { text-align: right; }
@@ -3157,8 +3152,13 @@
                 @media print { body { padding: 0; } }
                 @page { size: A4; margin: 10mm; }
             </style></head><body>${content}</body></html>`);
-        win.document.close();
-        setTimeout(() => { win.focus(); win.print(); }, 500);
+        doc.close();
+        
+        // Wait for styles to apply
+        setTimeout(() => {
+            frame.contentWindow.focus();
+            frame.contentWindow.print();
+        }, 500);
     }
 
     window.openPrintModal = function() {
@@ -3514,7 +3514,7 @@
     // INIT
     // ============================================
     window.onload = function() {
-        console.log('✅ KHATA PRO V4.1 loaded');
+        console.log('✅ KHATA PRO V4.2 loaded');
 
         if (db.theme) {
             const t = themeColors[db.theme];
@@ -3534,4 +3534,4 @@
     };
     </script>
 </body>
-</html>
+                                                                                                                                                   </html>
