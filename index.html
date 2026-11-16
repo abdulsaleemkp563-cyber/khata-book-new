@@ -640,6 +640,47 @@
         .rto-container .controls-section { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-bottom: 14px; background: #131930; padding: 11px; border-radius: 10px; }
         .rto-container .search-input { background: #1a1f36; border: 1px solid #252d53; padding: 9px; border-radius: 7px; color: #fff; width: 100%; max-width: 280px; }
         .rto-container .storage-info { background: #1a1f36; padding: 5px 10px; border-radius: 16px; font-size: 11px; color: #00f5d4; }
+
+        /* PRINT PREVIEW STYLES */
+        .print-preview-modal {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .print-header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .print-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        .print-table th {
+            background: #7c3aed;
+            color: white;
+            padding: 8px;
+            text-align: left;
+        }
+        .print-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #printSection, #printSection * { visibility: visible; }
+            #printSection { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -672,7 +713,7 @@
                 <button class="lock-key" onclick="pressKey('0')">0</button>
                 <button class="lock-key warn" onclick="fullResetApp()"><i class="fa-solid fa-triangle-exclamation"></i></button>
             </div>
-            <div class="lock-footer">Khata Premium v4.2</div>
+            <div class="lock-footer">Khata Premium v4.6</div>
         </div>
     </div>
 
@@ -873,18 +914,21 @@
 
             <!-- VEHICLE DETAIL -->
             <div id="vehicleDetailWorkspaceView" class="workspace-view">
-                <div class="mb-3">
+                <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                     <button onclick="switchView('vehicle')" class="btn-premium blue text-xs"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <div class="flex gap-2">
+                        <button onclick="printSpecificVehicleReport(currentVehicleDetailName)" class="print-btn-custom"><i class="fa-solid fa-print"></i> Print Report</button>
+                        <button onclick="openAddVehicleExpenseModal(currentVehicleDetailName)" class="add-btn"><i class="fa-solid fa-plus"></i> Add</button>
+                    </div>
                 </div>
                 <div id="vehicleDetailHeader" class="premium-card mb-3">
                     <div class="flex justify-between items-center">
                         <div><h2 id="vehicleDetailName" class="text-xl font-black text-gray-800">—</h2></div>
-                        <button onclick="openAddVehicleExpenseModal(currentVehicleDetailName)" class="add-btn"><i class="fa-solid fa-plus"></i> Add</button>
                     </div>
                     <div class="grid grid-cols-3 gap-2 mt-3 text-center">
-                        <div class="bg-red-50 rounded-lg p-2"><span class="block font-bold text-red-700 text-[10px]">Expense</span><span id="vehicleDetailExpense" class="font-black text-base">₹0</span></div>
-                        <div class="bg-green-50 rounded-lg p-2"><span class="block font-bold text-green-700 text-[10px]">Collection</span><span id="vehicleDetailCollection" class="font-black text-base">₹0</span></div>
-                        <div class="bg-blue-50 rounded-lg p-2"><span class="block font-bold text-blue-700 text-[10px]">Net</span><span id="vehicleDetailNet" class="font-black text-base">₹0</span></div>
+                        <div class="bg-red-50 rounded-lg p-2 cursor-pointer border-2 transition-all" onclick="filterVehicleDetail('expense')" id="vdFilterExpense"><span class="block font-bold text-red-700 text-[10px]">Expense</span><span id="vehicleDetailExpense" class="font-black text-base">₹0</span></div>
+                        <div class="bg-green-50 rounded-lg p-2 cursor-pointer border-2 transition-all" onclick="filterVehicleDetail('collection')" id="vdFilterCollection"><span class="block font-bold text-green-700 text-[10px]">Collection</span><span id="vehicleDetailCollection" class="font-black text-base">₹0</span></div>
+                        <div class="bg-blue-50 rounded-lg p-2 cursor-pointer border-2 transition-all" onclick="filterVehicleDetail('all')" id="vdFilterAll"><span class="block font-bold text-blue-700 text-[10px]">Net Total</span><span id="vehicleDetailNet" class="font-black text-base">₹0</span></div>
                     </div>
                 </div>
                 <div id="vehicleDetailEntriesList" class="space-y-2"></div>
@@ -1052,7 +1096,7 @@
                     <div><div class="font-bold">DATA</div><div class="text-xs text-gray-500">Backup, Restore, Reset</div></div>
                     <i class="fa-solid fa-chevron-right opacity-40 ml-auto"></i>
                 </div>
-                <div class="text-center text-xs text-gray-400 font-bold py-4">KHATA PRO PREMIUM - V4.2</div>
+                <div class="text-center text-xs text-gray-400 font-bold py-4">KHATA PRO PREMIUM - V4.6</div>
             </div>
 
             <!-- RTO -->
@@ -1130,13 +1174,35 @@
         </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- MAIN MODAL -->
     <div id="modalOverlay" class="fixed inset-0 bg-black/60 hidden z-[1000] items-center justify-center p-4" onclick="closeModal()">
         <div id="modalBox" class="modal-premium" onclick="event.stopPropagation()"></div>
     </div>
 
-    <!-- HIDDEN PRINT FRAME -->
-    <iframe id="printFrame" style="display:none;"></iframe>
+    <!-- PRINT PREVIEW MODAL (OVERLAY) -->
+    <div id="printOverlay" class="fixed inset-0 bg-black/80 hidden z-[2000] items-center justify-center p-2 sm:p-4" style="backdrop-filter: blur(4px);">
+        <div class="print-preview-modal shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-3 no-print">
+                <h3 class="font-black text-gray-800 text-lg">Print Preview</h3>
+                <button onclick="closePrintPreview()" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-300 border-0 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- PRINT CONTENT -->
+            <div id="printSection">
+                <!-- Content will be injected here -->
+            </div>
+            
+            <!-- ACTION BUTTONS -->
+            <div class="mt-4 flex gap-2 no-print border-t pt-4">
+                <button onclick="executeBrowserPrint()" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-black rounded-xl border-0 cursor-pointer shadow-lg text-sm">
+                    <i class="fa-solid fa-print mr-1"></i> PRINT / SAVE AS PDF
+                </button>
+                <button onclick="closePrintPreview()" class="py-3 px-4 bg-gray-100 text-gray-600 font-bold rounded-xl border-0 cursor-pointer">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
     // ============================================
@@ -1160,6 +1226,7 @@
     let currentIEFilter = 'ALL';
     let currentViewLoanId = null;
     let currentVehicleDetailName = '';
+    let vehicleDetailFilter = 'all'; // 'all', 'expense', 'collection'
     let currentView = 'home';
     let pinInput = '';
     let isSettingPin = false;
@@ -1426,7 +1493,7 @@
     }
 
     // ============================================
-    // CLIENTS & LEDGER (SAVE BUG FIXED)
+    // CLIENTS & LEDGER
     // ============================================
     function renderClientListFeed() {
         let filtered = db.customers.filter(c =>
@@ -2067,25 +2134,49 @@
     // ============================================
     window.openVehicleDetail = function(v) {
         currentVehicleDetailName = v;
+        vehicleDetailFilter = 'all';
         switchView('vehicleDetail');
+        renderVehicleDetails();
+    };
+
+    window.filterVehicleDetail = function(type) {
+        vehicleDetailFilter = type;
+        
+        // Reset all colors
+        document.getElementById('vdFilterExpense').className = 'bg-red-50 rounded-lg p-2 cursor-pointer border-2 border-transparent transition-all';
+        document.getElementById('vdFilterCollection').className = 'bg-green-50 rounded-lg p-2 cursor-pointer border-2 border-transparent transition-all';
+        document.getElementById('vdFilterAll').className = 'bg-blue-50 rounded-lg p-2 cursor-pointer border-2 border-transparent transition-all';
+
+        // Highlight active
+        if (type === 'expense') document.getElementById('vdFilterExpense').className = 'bg-red-100 border-red-500 rounded-lg p-2 cursor-pointer border-2 transform scale-105 shadow-md transition-all';
+        else if (type === 'collection') document.getElementById('vdFilterCollection').className = 'bg-green-100 border-green-500 rounded-lg p-2 cursor-pointer border-2 transform scale-105 shadow-md transition-all';
+        else document.getElementById('vdFilterAll').className = 'bg-blue-100 border-blue-500 rounded-lg p-2 cursor-pointer border-2 transform scale-105 shadow-md transition-all';
+
         renderVehicleDetails();
     };
 
     function renderVehicleDetails() {
         const v = currentVehicleDetailName;
         if (!v) return;
-        const entries = db.vehicleExpenses.filter(e => e.vehicleName === v);
-        document.getElementById('vehicleDetailName').innerText = v;
+        
+        let entries = db.vehicleExpenses.filter(e => e.vehicleName === v);
+        
         let te = 0, tc = 0;
         entries.forEach(e => { if (e.type === 'expense') te += e.amount; else tc += e.amount; });
         const net = tc - te;
+        
+        document.getElementById('vehicleDetailName').innerText = v;
         document.getElementById('vehicleDetailExpense').innerText = '₹' + te.toFixed(0);
         document.getElementById('vehicleDetailCollection').innerText = '₹' + tc.toFixed(0);
         document.getElementById('vehicleDetailNet').innerText = '₹' + Math.abs(net).toFixed(0);
         document.getElementById('vehicleDetailNet').className = `font-black text-base ${net >= 0 ? 'text-green-600' : 'text-red-600'}`;
+        
+        if (vehicleDetailFilter === 'expense') entries = entries.filter(e => e.type === 'expense');
+        else if (vehicleDetailFilter === 'collection') entries = entries.filter(e => e.type === 'collection');
+
         let html = '';
         const sorted = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
-        if (sorted.length === 0) html = '<div class="empty-state"><p>No entries</p></div>';
+        if (sorted.length === 0) html = '<div class="empty-state"><p>No entries found</p></div>';
         else sorted.forEach(e => {
             const tl = e.type === 'expense' ? 'Expense' : 'Collection';
             const cc = e.type === 'expense' ? 'text-red-600' : 'text-green-600';
@@ -3127,39 +3218,23 @@
     };
 
     // ============================================
-    // PRINT (IFRAME FIX)
+    // PRINT PREVIEW SYSTEM (FULLY FIXED)
     // ============================================
-    function openPrintWindow(title, content) {
-        const frame = document.getElementById('printFrame');
-        const doc = frame.contentWindow.document;
-        doc.open();
-        doc.write(`<!DOCTYPE html><html><head><title>${title}</title><meta charset="UTF-8">
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                .print-header { background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                .print-header h1 { font-size: 24px; }
-                .summary-box { display: flex; justify-content: space-around; background: #f8f7ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-                .summary-box > div { text-align: center; flex: 1; min-width: 100px; }
-                .summary-box .lbl { font-size: 10px; color: #6b7280; text-transform: uppercase; font-weight: 700; }
-                .summary-box .val { font-size: 18px; font-weight: 900; margin-top: 4px; }
-                table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-                th { background: #7c3aed; color: white; padding: 10px 8px; text-align: left; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                td { padding: 9px 8px; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
-                tr:nth-child(even) td { background: #fafafa; }
-                .text-right { text-align: right; }
-                .footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 2px dashed #ddd; color: #6b7280; font-size: 11px; }
-                @media print { body { padding: 0; } }
-                @page { size: A4; margin: 10mm; }
-            </style></head><body>${content}</body></html>`);
-        doc.close();
-        
-        // Wait for styles to apply
-        setTimeout(() => {
-            frame.contentWindow.focus();
-            frame.contentWindow.print();
-        }, 500);
+    function showPrintPreview(content) {
+        document.getElementById('printSection').innerHTML = content;
+        document.getElementById('printOverlay').style.display = 'flex';
+        document.getElementById('printOverlay').classList.remove('hidden');
     }
+
+    window.closePrintPreview = function() {
+        document.getElementById('printOverlay').style.display = 'none';
+        document.getElementById('printOverlay').classList.add('hidden');
+        document.getElementById('printSection').innerHTML = '';
+    };
+
+    window.executeBrowserPrint = function() {
+        window.print();
+    };
 
     window.openPrintModal = function() {
         const cust = db.customers.find(c => c.id === activeCid);
@@ -3170,7 +3245,7 @@
             <div class="space-y-3">
                 <div><label class="text-sm font-bold">From</label><input id="ps" type="date" class="w-full p-2 border border-gray-200 rounded-lg" value="${new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]}"></div>
                 <div><label class="text-sm font-bold">To</label><input id="pe" type="date" class="w-full p-2 border border-gray-200 rounded-lg" value="${getToday()}"></div>
-                <button onclick="generatePrintA4()" class="w-full p-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-black border-0 cursor-pointer">📄 PRINT</button>
+                <button onclick="generatePrintA4()" class="w-full p-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg font-black border-0 cursor-pointer">📄 GENERATE & PREVIEW</button>
                 <button onclick="closeModal()" class="w-full p-2 text-gray-500 border-0 bg-transparent cursor-pointer">Cancel</button>
             </div>
         </div>`);
@@ -3188,18 +3263,27 @@
             rt += (t.type === 'GAVE' ? t.amt : -t.amt);
             return `<tr><td>${fmtDate(t.date)}<br><span style="color:#6b7280;font-size:10px;">${t.rem || ''}</span></td><td class="text-right" style="color:#dc2626;font-weight:bold;">${t.type === 'GAVE' ? '₹' + t.amt.toFixed(2) : '-'}</td><td class="text-right" style="color:#16a34a;font-weight:bold;">${t.type === 'GOT' ? '₹' + t.amt.toFixed(2) : '-'}</td><td class="text-right" style="color:#2563eb;font-weight:bold;">₹${Math.abs(rt).toFixed(2)}</td></tr>`;
         }).join('');
+        
         const content = `
-            <div class="print-header"><h1>📋 KHATA PRO</h1><p><strong>${cust.name}</strong> ${cust.phone ? '| ' + cust.phone : ''}</p><p>${fmtDate(s)} - ${fmtDate(e)}</p></div>
-            <div class="summary-box">
-                <div><div class="lbl">Gave</div><div class="val" style="color:#dc2626;">₹${tg.toFixed(2)}</div></div>
-                <div><div class="lbl">Got</div><div class="val" style="color:#16a34a;">₹${tr.toFixed(2)}</div></div>
-                <div><div class="lbl">Balance</div><div class="val" style="color:#2563eb;">₹${Math.abs(rt).toFixed(2)}</div></div>
+            <div class="print-header">
+                <h1>📋 KHATA PRO</h1>
+                <p><strong>${cust.name}</strong> ${cust.phone ? '| ' + cust.phone : ''}</p>
+                <p>${fmtDate(s)} - ${fmtDate(e)}</p>
             </div>
-            <table><thead><tr><th>Date</th><th class="text-right">Gave</th><th class="text-right">Got</th><th class="text-right">Balance</th></tr></thead><tbody>${rows}</tbody></table>
-            <div class="footer">KHATA PRO - ${getToday()}</div>
+            <div class="flex justify-around bg-gray-50 p-3 rounded-lg mb-4 flex-wrap gap-2">
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Gave</div><div class="text-lg font-black" style="color:#dc2626;">₹${tg.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Got</div><div class="text-lg font-black" style="color:#16a34a;">₹${tr.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Balance</div><div class="text-lg font-black" style="color:#2563eb;">₹${Math.abs(rt).toFixed(2)}</div></div>
+            </div>
+            <table class="print-table">
+                <thead><tr><th>Date</th><th class="text-right">Gave</th><th class="text-right">Got</th><th class="text-right">Balance</th></tr></thead>
+                <tbody>${rows || '<tr><td colspan="4" class="text-center py-4 text-gray-400">No records found</td></tr>'}</tbody>
+            </table>
+            <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-300 text-xs text-gray-500">KHATA PRO - ${getToday()}</div>
         `;
-        openPrintWindow(cust.name, content);
+        
         closeModal();
+        showPrintPreview(content);
     };
 
     window.printFullIncomeExpense = function() {
@@ -3207,33 +3291,35 @@
         const ti = incomes.reduce((s, i) => s + i.amount, 0), te = expenses.reduce((s, e) => s + e.amount, 0);
         let ir = incomes.map(i => `<tr><td>${fmtDate(i.date)}</td><td>${i.category}</td><td class="text-right" style="color:#16a34a;">₹${i.amount.toFixed(2)}</td><td>${i.notes || ''}</td></tr>`).join('') || '<tr><td colspan="4" class="text-center">No records</td></tr>';
         let er = expenses.map(e => `<tr><td>${fmtDate(e.date)}</td><td>${e.category}</td><td class="text-right" style="color:#dc2626;">₹${e.amount.toFixed(2)}</td><td>${e.notes || ''}</td></tr>`).join('') || '<tr><td colspan="4" class="text-center">No records</td></tr>';
+        
         const content = `
             <div class="print-header"><h1>💰 INCOME & EXPENSE</h1><p>${getToday()}</p></div>
-            <div class="summary-box">
-                <div><div class="lbl">Income</div><div class="val" style="color:#16a34a;">₹${ti.toFixed(2)}</div></div>
-                <div><div class="lbl">Expense</div><div class="val" style="color:#dc2626;">₹${te.toFixed(2)}</div></div>
-                <div><div class="lbl">Balance</div><div class="val" style="color:#2563eb;">₹${(ti - te).toFixed(2)}</div></div>
+            <div class="flex justify-around bg-gray-50 p-3 rounded-lg mb-4 flex-wrap gap-2">
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Income</div><div class="text-lg font-black" style="color:#16a34a;">₹${ti.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Expense</div><div class="text-lg font-black" style="color:#dc2626;">₹${te.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Balance</div><div class="text-lg font-black" style="color:#2563eb;">₹${(ti - te).toFixed(2)}</div></div>
             </div>
             <h3 style="color:#16a34a;margin:15px 0 8px;">INCOME</h3>
-            <table><thead><tr><th>Date</th><th>Category</th><th class="text-right">Amount</th><th>Notes</th></tr></thead><tbody>${ir}</tbody></table>
+            <table class="print-table"><thead><tr><th>Date</th><th>Category</th><th class="text-right">Amount</th><th>Notes</th></tr></thead><tbody>${ir}</tbody></table>
             <h3 style="color:#dc2626;margin:15px 0 8px;">EXPENSE</h3>
-            <table><thead><tr><th>Date</th><th>Category</th><th class="text-right">Amount</th><th>Notes</th></tr></thead><tbody>${er}</tbody></table>
-            <div class="footer">KHATA PRO - ${getToday()}</div>
+            <table class="print-table"><thead><tr><th>Date</th><th>Category</th><th class="text-right">Amount</th><th>Notes</th></tr></thead><tbody>${er}</tbody></table>
+            <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-300 text-xs text-gray-500">KHATA PRO - ${getToday()}</div>
         `;
-        openPrintWindow('Income & Expense', content);
+        showPrintPreview(content);
     };
 
     window.printIncomeBalance = function() {
         const incomes = db.incomes || [];
         const ti = incomes.reduce((s, i) => s + i.amount, 0);
         let rows = incomes.map(i => `<tr><td>${fmtDate(i.date)}</td><td>${i.category}</td><td class="text-right" style="color:#16a34a;">₹${i.amount.toFixed(2)}</td><td class="text-right" style="color:#dc2626;">₹${(i.usedAmount || 0).toFixed(2)}</td><td class="text-right" style="color:#2563eb;font-weight:bold;">₹${(i.amount - (i.usedAmount || 0)).toFixed(2)}</td></tr>`).join('') || '<tr><td colspan="5" class="text-center">No records</td></tr>';
+        
         const content = `
             <div class="print-header"><h1>💰 INCOME BALANCE</h1><p>${getToday()}</p></div>
-            <div class="summary-box"><div><div class="lbl">Total</div><div class="val" style="color:#16a34a;">₹${ti.toFixed(2)}</div></div></div>
-            <table><thead><tr><th>Date</th><th>Category</th><th class="text-right">Received</th><th class="text-right">Used</th><th class="text-right">Available</th></tr></thead><tbody>${rows}</tbody></table>
-            <div class="footer">KHATA PRO - ${getToday()}</div>
+            <div class="flex justify-around bg-gray-50 p-3 rounded-lg mb-4"><div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Total Income</div><div class="text-lg font-black" style="color:#16a34a;">₹${ti.toFixed(2)}</div></div></div>
+            <table class="print-table"><thead><tr><th>Date</th><th>Category</th><th class="text-right">Received</th><th class="text-right">Used</th><th class="text-right">Available</th></tr></thead><tbody>${rows}</tbody></table>
+            <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-300 text-xs text-gray-500">KHATA PRO - ${getToday()}</div>
         `;
-        openPrintWindow('Income Balance', content);
+        showPrintPreview(content);
     };
 
     window.printCashBook = function() {
@@ -3241,17 +3327,18 @@
         const tg = db.cashBook.filter(t => t.type === 'GAVE').reduce((s, t) => s + t.amount, 0);
         const tr = db.cashBook.filter(t => t.type === 'RECEIVED').reduce((s, t) => s + t.amount, 0);
         let rows = [...db.cashBook].sort((a, b) => new Date(b.date) - new Date(a.date)).map(t => `<tr><td>${fmtDate(t.date)}</td><td>${t.type}</td><td class="text-right" style="color:${t.type === 'GAVE' ? '#dc2626' : '#16a34a'};font-weight:bold;">₹${t.amount.toFixed(2)}</td><td>${t.note || ''}</td></tr>`).join('');
+        
         const content = `
             <div class="print-header"><h1>💰 CASH BOOK</h1><p>${getToday()}</p></div>
-            <div class="summary-box">
-                <div><div class="lbl">Gave</div><div class="val" style="color:#dc2626;">₹${tg.toFixed(2)}</div></div>
-                <div><div class="lbl">Received</div><div class="val" style="color:#16a34a;">₹${tr.toFixed(2)}</div></div>
-                <div><div class="lbl">Net</div><div class="val" style="color:#2563eb;">₹${(tr - tg).toFixed(2)}</div></div>
+            <div class="flex justify-around bg-gray-50 p-3 rounded-lg mb-4">
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Gave</div><div class="text-lg font-black" style="color:#dc2626;">₹${tg.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Received</div><div class="text-lg font-black" style="color:#16a34a;">₹${tr.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Net</div><div class="text-lg font-black" style="color:#2563eb;">₹${(tr - tg).toFixed(2)}</div></div>
             </div>
-            <table><thead><tr><th>Date</th><th>Type</th><th class="text-right">Amount</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>
-            <div class="footer">KHATA PRO - ${getToday()}</div>
+            <table class="print-table"><thead><tr><th>Date</th><th>Type</th><th class="text-right">Amount</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>
+            <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-300 text-xs text-gray-500">KHATA PRO - ${getToday()}</div>
         `;
-        openPrintWindow('Cash Book', content);
+        showPrintPreview(content);
     };
 
     window.printVehicleExpenses = function() {
@@ -3259,27 +3346,73 @@
         const te = db.vehicleExpenses.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
         const tc = db.vehicleExpenses.filter(e => e.type === 'collection').reduce((s, e) => s + e.amount, 0);
         let rows = [...db.vehicleExpenses].sort((a, b) => new Date(b.date) - new Date(a.date)).map(e => `<tr><td>${fmtDate(e.date)}</td><td>${e.vehicleName}</td><td>${e.expenseType}</td><td class="text-right" style="color:${e.type === 'expense' ? '#dc2626' : '#16a34a'};font-weight:bold;">₹${e.amount.toFixed(2)}</td><td>${e.remarks || ''}</td></tr>`).join('');
+        
         const content = `
-            <div class="print-header"><h1>🚗 VEHICLE</h1><p>${getToday()}</p></div>
-            <div class="summary-box">
-                <div><div class="lbl">Expense</div><div class="val" style="color:#dc2626;">₹${te.toFixed(2)}</div></div>
-                <div><div class="lbl">Collection</div><div class="val" style="color:#16a34a;">₹${tc.toFixed(2)}</div></div>
+            <div class="print-header"><h1>🚗 ALL VEHICLES</h1><p>${getToday()}</p></div>
+            <div class="flex justify-around bg-gray-50 p-3 rounded-lg mb-4">
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Total Expense</div><div class="text-lg font-black" style="color:#dc2626;">₹${te.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Total Collection</div><div class="text-lg font-black" style="color:#16a34a;">₹${tc.toFixed(2)}</div></div>
             </div>
-            <table><thead><tr><th>Date</th><th>Vehicle</th><th>Type</th><th class="text-right">Amount</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>
-            <div class="footer">KHATA PRO - ${getToday()}</div>
+            <table class="print-table"><thead><tr><th>Date</th><th>Vehicle</th><th>Type</th><th class="text-right">Amount</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>
+            <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-300 text-xs text-gray-500">KHATA PRO - ${getToday()}</div>
         `;
-        openPrintWindow('Vehicle', content);
+        showPrintPreview(content);
+    };
+
+    window.printSpecificVehicleReport = function(vehicleName) {
+        if (!vehicleName) return;
+        
+        let entries = db.vehicleExpenses.filter(e => e.vehicleName === vehicleName);
+        if (entries.length === 0) return alert('No data for this vehicle');
+
+        let te = 0, tc = 0;
+        entries.forEach(e => { if (e.type === 'expense') te += e.amount; else tc += e.amount; });
+        const net = tc - te;
+
+        if (vehicleDetailFilter === 'expense') entries = entries.filter(e => e.type === 'expense');
+        else if (vehicleDetailFilter === 'collection') entries = entries.filter(e => e.type === 'collection');
+
+        let rows = entries.sort((a, b) => new Date(b.date) - new Date(a.date)).map(e => `<tr>
+            <td>${fmtDate(e.date)}</td>
+            <td>${e.expenseType || 'General'}</td>
+            <td class="text-right" style="color:${e.type === 'expense' ? '#dc2626' : '#16a34a'};font-weight:bold;">
+                ${e.type === 'expense' ? '-' : '+'}₹${e.amount.toFixed(2)}
+            </td>
+            <td>${e.remarks || ''}</td>
+        </tr>`).join('');
+
+        const filterTitle = vehicleDetailFilter === 'all' ? 'All Transactions' : vehicleDetailFilter === 'expense' ? 'Expense Only' : 'Collection Only';
+
+        const content = `
+            <div class="print-header">
+                <h1>🚗 ${vehicleName.toUpperCase()}</h1>
+                <p>${filterTitle} Report</p>
+                <p>${getToday()}</p>
+            </div>
+            <div class="flex justify-around bg-gray-50 p-3 rounded-lg mb-4">
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Expense</div><div class="text-lg font-black" style="color:#dc2626;">₹${te.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Collection</div><div class="text-lg font-black" style="color:#16a34a;">₹${tc.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Net Total</div><div class="text-lg font-black" style="color:${net >= 0 ? '#16a34a' : '#dc2626'};">₹${Math.abs(net).toFixed(2)}</div></div>
+            </div>
+            <table class="print-table">
+                <thead><tr><th>Date</th><th>Category</th><th class="text-right">Amount</th><th>Remarks</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-300 text-xs text-gray-500">KHATA PRO - ${getToday()}</div>
+        `;
+        showPrintPreview(content);
     };
 
     window.printReminders = function() {
         if (db.reminders.length === 0) return alert('No data');
         let rows = [...db.reminders].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).map(r => `<tr><td>${fmtDate(r.dueDate)}</td><td>${r.title}</td><td>${r.description || ''}</td></tr>`).join('');
+        
         const content = `
             <div class="print-header"><h1>📝 REMINDERS</h1><p>${getToday()}</p></div>
-            <table><thead><tr><th>Due Date</th><th>Title</th><th>Description</th></tr></thead><tbody>${rows}</tbody></table>
-            <div class="footer">KHATA PRO - ${getToday()}</div>
+            <table class="print-table"><thead><tr><th>Due Date</th><th>Title</th><th>Description</th></tr></thead><tbody>${rows}</tbody></table>
+            <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-300 text-xs text-gray-500">KHATA PRO - ${getToday()}</div>
         `;
-        openPrintWindow('Reminders', content);
+        showPrintPreview(content);
     };
 
     window.printLoanDetails = function(id) {
@@ -3288,17 +3421,18 @@
         const c = db.customers.find(x => x.id === l.cid);
         const payments = db.loanPayments ? db.loanPayments.filter(p => p.loanId === id).sort((a, b) => new Date(a.date) - new Date(b.date)) : [];
         let rows = payments.map(p => `<tr><td>${fmtDate(p.date)}${p.isExtra ? ' (Extra)' : ''}</td><td class="text-right">₹${(p.amount || 0).toFixed(2)}</td><td class="text-right">₹${(p.principalPaid || 0).toFixed(2)}</td><td class="text-right">₹${(p.interestApplied || 0).toFixed(2)}</td></tr>`).join('') || '<tr><td colspan="4" class="text-center">No payments</td></tr>';
+        
         const content = `
             <div class="print-header"><h1>💰 LOAN</h1><p><strong>${c?.name || 'Unknown'}</strong> - ${l.purpose || 'Loan'}</p></div>
-            <div class="summary-box">
-                <div><div class="lbl">Amount</div><div class="val" style="color:#4f46e5;">₹${l.amount.toFixed(2)}</div></div>
-                <div><div class="lbl">Balance</div><div class="val" style="color:#dc2626;">₹${(l.balance || l.amount).toFixed(2)}</div></div>
-                <div><div class="lbl">Status</div><div class="val" style="color:#d97706;">${l.status}</div></div>
+            <div class="flex justify-around bg-gray-50 p-3 rounded-lg mb-4">
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Amount</div><div class="text-lg font-black" style="color:#4f46e5;">₹${l.amount.toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Balance</div><div class="text-lg font-black" style="color:#dc2626;">₹${(l.balance || l.amount).toFixed(2)}</div></div>
+                <div class="text-center"><div class="text-[10px] text-gray-500 uppercase font-bold">Status</div><div class="text-lg font-black" style="color:#d97706;">${l.status}</div></div>
             </div>
-            <table><thead><tr><th>Date</th><th class="text-right">Amount</th><th class="text-right">Principal</th><th class="text-right">Interest</th></tr></thead><tbody>${rows}</tbody></table>
-            <div class="footer">KHATA PRO - ${getToday()}</div>
+            <table class="print-table"><thead><tr><th>Date</th><th class="text-right">Amount</th><th class="text-right">Principal</th><th class="text-right">Interest</th></tr></thead><tbody>${rows}</tbody></table>
+            <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-300 text-xs text-gray-500">KHATA PRO - ${getToday()}</div>
         `;
-        openPrintWindow('Loan', content);
+        showPrintPreview(content);
     };
 
     // ============================================
@@ -3514,7 +3648,7 @@
     // INIT
     // ============================================
     window.onload = function() {
-        console.log('✅ KHATA PRO V4.2 loaded');
+        console.log('✅ KHATA PRO V4.6 loaded');
 
         if (db.theme) {
             const t = themeColors[db.theme];
@@ -3534,4 +3668,4 @@
     };
     </script>
 </body>
-                                                                                                                                                   </html>
+</html>
